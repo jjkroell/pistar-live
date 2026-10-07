@@ -60,12 +60,20 @@ command -v nginx >/dev/null || die "nginx not found."
 was_ro=0
 if findmnt -no OPTIONS / | tr ',' '\n' | grep -qx ro; then
   was_ro=1
-  mount -o remount,rw /
+  mount -o remount,rw / || die "Couldn't make / writable. Run rpi-rw, then try again."
+  say "Filesystem made writable (rpi-rw)"
 fi
 tmp=""
 cleanup() {
   [ -n "$tmp" ] && rm -rf "$tmp"
-  if [ "$was_ro" -eq 1 ]; then sync; mount -o remount,ro / 2>/dev/null || true; fi
+  if [ "$was_ro" -eq 1 ]; then
+    sync
+    if mount -o remount,ro / 2>/dev/null; then
+      say "Filesystem back to read-only (rpi-ro)"
+    else
+      warn "Couldn't set / back to read-only; run rpi-ro when you're done."
+    fi
+  fi
 }
 trap cleanup EXIT
 

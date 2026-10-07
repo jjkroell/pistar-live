@@ -58,9 +58,15 @@ isn't visible.
 On the Pi-Star (over SSH, logged in as `pi-star`):
 
 ```sh
+cd /tmp
 wget https://github.com/jjkroell/pistar-live/releases/latest/download/pistar-live-install.sh
 sudo bash pistar-live-install.sh
 ```
+
+Download it into `/tmp`: Pi-Star keeps the rest of the filesystem read-only, so saving it in your
+home directory fails unless you run `rpi-rw` first. You don't need `rpi-rw` for the install itself,
+because the installer makes the filesystem writable while it works and sets it back to read-only
+when it finishes.
 
 Run it as a file as shown. Piping it straight into `bash` won't work, because the files it installs
 are packed inside the script. Running it again upgrades in place.
