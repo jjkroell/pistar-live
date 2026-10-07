@@ -39,6 +39,8 @@ and Live Logs get the same look, with all of Pi-Star's own forms and buttons sti
   after every section. It shows when you have unsaved changes and stays busy while the Pi applies them.
 - **Power, Backup/Restore and Update** get clear icon buttons in place of the glossy images.
 
+![Admin as a control page: system details, services, network tools and controls](docs/screenshots/admin.png)
+
 ![Configuration with the sticky Apply Changes bar showing unsaved changes](docs/screenshots/configuration.png)
 
 ![The Power page with Reboot and Shut down buttons](docs/screenshots/power.png)
