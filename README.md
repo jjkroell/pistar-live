@@ -45,6 +45,8 @@ and Live Logs get the same look, with all of Pi-Star's own forms and buttons sti
 
 ![The Power page with Reboot and Shut down buttons](docs/screenshots/power.png)
 
+![Backup/Restore with Download and Restore buttons and the backup file picker](docs/screenshots/backup.png)
+
 It is also lighter on the Pi. Each of the stock dashboard's three live panels re-parses the MMDVMHost
 log on its own 1 to 1.5 second timer; this parses it once per update, and stops polling when the tab
 isn't visible.
