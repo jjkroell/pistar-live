@@ -202,8 +202,13 @@ html table {
   color: var(--ink);
   font-family: var(--sans);
   white-space: normal;
-  overflow: hidden;
+  /* No overflow clipping: the settings help popups must be able to leave the table.
+     Corner cells carry the rounding instead. */
 }
+html table > tbody > tr:first-child > :first-child, html table > tr:first-child > :first-child { border-top-left-radius: calc(var(--radius-lg) - 1px); }
+html table > tbody > tr:first-child > :last-child, html table > tr:first-child > :last-child { border-top-right-radius: calc(var(--radius-lg) - 1px); }
+html table > tbody > tr:last-child > :first-child, html table > tr:last-child > :first-child { border-bottom-left-radius: calc(var(--radius-lg) - 1px); }
+html table > tbody > tr:last-child > :last-child, html table > tr:last-child > :last-child { border-bottom-right-radius: calc(var(--radius-lg) - 1px); }
 html table tr:nth-child(even), html table tr:nth-child(odd) { background: transparent; }
 html table th {
   padding: 8px 10px;
@@ -708,3 +713,7 @@ html .ps-embed .ps-tools { padding-bottom: 14px; }
 /* No hover tooltips on table column headers (they only repeated the header). */
 html th a.tooltip span, html th a.tooltip:hover span { display: none !important; }
 html th a.tooltip, html th a.tooltip:hover { cursor: default; text-decoration: none; }
+
+/* Help popups near the bottom of the window open upwards (skin.js sets the class). */
+html a.tooltip2.ps-tip-up:hover span, html a.tooltip.ps-tip-up:hover span { top: auto; bottom: 22px; }
+html a.tooltip2:hover span, html a.tooltip:hover span { z-index: 60; }

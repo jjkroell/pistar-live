@@ -250,7 +250,26 @@
       .catch(function () { /* leave the stock admin page as it is */ });
   }
 
+  /* ---------- Help popups: open upwards near the bottom of the window ---------- */
+
+  function tooltips() {
+    document.addEventListener('mouseover', function (e) {
+      var a = e.target.closest && e.target.closest('a.tooltip2, a.tooltip');
+      if (!a) return;
+      var tip = a.querySelector('span');
+      if (!tip) return;
+      // Measure the popup off-screen in its normal (downward) position.
+      a.classList.remove('ps-tip-up');
+      var below = a.getBoundingClientRect().bottom + 22 + (tip.offsetHeight || 140);
+      // Leave room for the sticky Apply bar on settings pages.
+      var bar = document.querySelector('.ps-applybar');
+      var limit = window.innerHeight - (bar ? bar.offsetHeight + 16 : 8);
+      if (below > limit) a.classList.add('ps-tip-up');
+    });
+  }
+
   function ready() {
+    tooltips();
     header();
     settingsPages();
     actionButtons();
