@@ -214,19 +214,19 @@
 
         document.addEventListener('pistar-live:mounted', function (e) {
           var slot = e.detail.slot;
-          if (tools.length && slot) {
-            var panel = document.createElement('section');
-            panel.className = 'panel ps-tools';
-            panel.setAttribute('aria-label', 'Network tools');
-            tools.forEach(function (el) { panel.appendChild(el); });
-            slot.appendChild(panel);
+          var empty = document.getElementById('toolsEmpty');
+          if (slot) {
+            slot.className = 'ps-tools';
+            tools.forEach(function (el) { slot.appendChild(el); });
             // Some tools (e.g. BrandMeister links) are empty until their own
-            // refresh fills them; show the panel only when there is something in it.
+            // refresh fills them; show the "nothing to manage" note until then.
             var sync = function () {
-              panel.hidden = !panel.textContent.trim() && !panel.querySelector('input, select, button, table, img');
+              var has = !!(slot.textContent.trim() || slot.querySelector('input, select, button, table, img'));
+              slot.hidden = !has;
+              if (empty) empty.hidden = has;
             };
             sync();
-            new MutationObserver(sync).observe(panel, { childList: true, subtree: true, characterData: true });
+            new MutationObserver(sync).observe(slot, { childList: true, subtree: true, characterData: true });
           }
           // Stop the stock refresh loops this layout replaces (each reschedules
           // itself by name, so a no-op ends the loop after its current tick).
@@ -238,7 +238,7 @@
           document.body.classList.add('ps-admin-live');
         }, { once: true });
 
-        window.PISTAR_LIVE = { cfg: cfg, services: true };
+        window.PISTAR_LIVE = { cfg: cfg, mode: 'admin' };
         var css = document.createElement('link');
         css.rel = 'stylesheet';
         css.href = '/live/app.css?v=' + LIVE_V;

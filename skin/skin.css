@@ -699,3 +699,12 @@ html img[src$="20green.png"], html img[src$="20red.png"] {
 html img[src$="20green.png"] { background: var(--on); box-shadow: 0 0 0 3px color-mix(in srgb, var(--on) 22%, transparent); }
 html img[src$="20red.png"] { background: var(--fault); box-shadow: 0 0 0 3px color-mix(in srgb, var(--fault) 22%, transparent); }
 html .ps-embed .activity-scroll .act thead th { background: var(--surface); }
+
+/* Admin control page: stock link colours must not leak into the control tiles. */
+html .ps-embed a.control:link, html .ps-embed a.control:visited { color: var(--ink); }
+html .ps-embed a.panel-note:link, html .ps-embed a.panel-note:visited { color: var(--link); }
+html .ps-embed .ps-tools { padding-bottom: 14px; }
+
+/* No hover tooltips on table column headers (they only repeated the header). */
+html th a.tooltip span, html th a.tooltip:hover span { display: none !important; }
+html th a.tooltip, html th a.tooltip:hover { cursor: default; text-decoration: none; }

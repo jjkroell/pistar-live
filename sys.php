@@ -59,8 +59,17 @@ if ($th !== false && preg_match('/^[0-9a-fA-F]+$/', trim($th))) {
     );
 }
 
+// IPv4 addresses when there are any (IPv6 ones are long and rarely what you need).
+function live_ip_list($raw)
+{
+    $all = preg_split('/\s+/', trim($raw), -1, PREG_SPLIT_NO_EMPTY);
+    $v4 = array_values(array_filter($all, function ($a) { return strpos($a, ':') === false; }));
+    return implode(', ', $v4 ? $v4 : $all);
+}
+
 // Service status, as on the stock admin page (dstarrepeater/system.php).
 // Only requested by /admin/, since it costs a few process lookups.
+// (Same LAN-only details the stock dashboard shows to anyone who can reach it.)
 if (isset($_GET['services'])) {
     include_once $_SERVER['DOCUMENT_ROOT'] . '/mmdvmhost/tools.php';
     $mmdvmMode = file_exists('/etc/dstar-radio.mmdvmhost');
@@ -71,6 +80,14 @@ if (isset($_GET['services'])) {
         array('TimeServer', 'timeserverd', false, false),
         array('PiStar-Watchdog', '/usr/local/sbin/pistar-watchdog', true, false),
         array('PiStar-Remote', '/usr/local/sbin/pistar-remote', true, false),
+    );
+    // Host details from the stock admin panel's "Gateway Hardware Information".
+    $model = trim(str_replace("\0", '', (string)@file_get_contents('/proc/device-tree/model')));
+    $out['host'] = array(
+        'name'     => php_uname('n'),
+        'platform' => $model,
+        'kernel'   => php_uname('r'),
+        'ip'       => live_ip_list((string)@exec('hostname -I')),
     );
     $out['services'] = array();
     foreach ($svc as $x) {

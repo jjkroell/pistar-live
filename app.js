@@ -24,28 +24,90 @@
 
   /* ---------- Layout ---------- */
 
+  var ADMIN = embed.mode === 'admin';   // the /admin/ control page (stock page, restyled)
+  var ADMIN_RECENT = 10;
+
+  var ICON = {
+    logs:   '<path d="M4 5h16M4 10h16M4 15h10M4 20h7"/>',
+    config: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+    expert: '<path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/>',
+    calib:  '<circle cx="12" cy="12" r="8"/><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/><circle cx="12" cy="12" r="1.5"/>',
+    update: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+    backup: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',
+    power:  '<path d="M12 3v8"/><path d="M6.34 6.34a8 8 0 1 0 11.32 0"/>'
+  };
+  var CONTROLS = [
+    ['/admin/live_modem_log.php', 'logs', 'Live logs', 'Follow the MMDVMHost log as it is written.'],
+    ['/admin/configure.php', 'config', 'Configuration', 'Callsign, modes, frequencies, networks and Wi-Fi.'],
+    ['/admin/expert/', 'expert', 'Expert editors', 'Edit the MMDVMHost and gateway config files directly.'],
+    ['/admin/calibration.php', 'calib', 'Calibrate', 'Measure and set your modem\'s frequency offset.'],
+    ['/admin/update.php', 'update', 'Update', 'Install the latest Pi-Star updates.'],
+    ['/admin/config_backup.php', 'backup', 'Backup / restore', 'Save or restore your configuration.'],
+    ['/admin/power.php', 'power', 'Power', 'Reboot or shut down the hotspot.']
+  ];
+
+  function readoutHtml() {
+    return '<section class="readout" id="readout" data-state="idle" aria-live="polite" aria-label="Radio status">' +
+      '<div class="ro-state"><span class="lamp-big" aria-hidden="true"></span><span id="roState">Connecting</span></div>' +
+      '<div class="ro-call"><span class="ro-label" id="roLabel">&nbsp;</span><span class="ro-callsign" id="roCall">&nbsp;</span></div>' +
+      '<dl class="ro-fields">' +
+        '<div><dt>Target</dt><dd id="roTarget">&nbsp;</dd></div>' +
+        '<div><dt>Mode</dt><dd id="roMode">&nbsp;</dd></div>' +
+        '<div><dt>Source</dt><dd id="roSrc">&nbsp;</dd></div>' +
+        '<div><dt id="roTimeLabel">Duration</dt><dd id="roTime">&nbsp;</dd></div>' +
+      '</dl>' +
+    '</section>';
+  }
+  function optionalPanels() {
+    return (cfg.dstarNet ? '<section class="panel" aria-label="D-Star CCS connections"><div id="ccs" class="frag"></div></section>' : '') +
+      (cfg.pocsag ? '<section class="panel" aria-labelledby="pgTitle"><div class="panel-head"><h2 id="pgTitle">POCSAG pages</h2></div><div id="pages" class="frag"></div></section>' : '');
+  }
+
   function buildLayout(root) {
     var tz = esc(cfg.tzAbbr || '');
-    root.innerHTML =
-      '<div class="stale" id="stale" hidden>Can\'t reach the hotspot. Retrying every few seconds.</div>' +
+    var stale = '<div class="stale" id="stale" hidden>Can\'t reach the hotspot. Retrying every few seconds.</div>';
+    if (ADMIN) {
+      root.innerHTML = stale +
+        '<main class="layout">' +
+        '<div class="primary">' +
+          readoutHtml() +
+          '<section class="panel sys-panel" id="system" aria-labelledby="sysTitle" hidden>' +
+            '<div class="panel-head"><h2 id="sysTitle">System</h2></div>' +
+            '<div class="sys-grid"><dl class="kv" id="sysList"></dl><div id="sysServices"></div></div>' +
+            '<p class="sys-alert" id="sysAlert" hidden></p>' +
+          '</section>' +
+          '<section class="panel" aria-labelledby="toolsTitle">' +
+            '<div class="panel-head"><h2 id="toolsTitle">Network tools</h2></div>' +
+            '<div id="liveSlot"></div>' +
+            '<p class="empty" id="toolsEmpty">Nothing to manage for this setup. Talkgroup and link controls appear here ' +
+              'when you use BrandMeister or TGIF, or the YSF, P25, NXDN, M17 or D-Star networks.</p>' +
+          '</section>' +
+          '<section class="panel" aria-labelledby="ctlTitle">' +
+            '<div class="panel-head"><h2 id="ctlTitle">Controls</h2></div>' +
+            '<div class="controls">' + CONTROLS.map(function (c) {
+              return '<a class="control control-' + c[1] + '" href="' + c[0] + '">' +
+                '<span class="control-icon" aria-hidden="true"><svg viewBox="0 0 24 24">' + ICON[c[1]] + '</svg></span>' +
+                '<span class="control-text"><span class="control-title">' + c[2] + '</span>' +
+                '<span class="control-desc">' + c[3] + '</span></span></a>';
+            }).join('') + '</div>' +
+          '</section>' +
+          '<section class="panel" aria-labelledby="gwTitle"><div class="panel-head"><h2 id="gwTitle">Recent activity</h2>' +
+            '<a class="panel-note" href="/live/">All activity on the dashboard</a></div><div id="gateway" class="activity"></div></section>' +
+          optionalPanels() +
+        '</div>' +
+        '<aside class="secondary" aria-label="Hotspot status"><div id="status" class="contents"></div></aside>' +
+        '</main>';
+      return;
+    }
+    root.innerHTML = stale +
       '<main class="layout">' +
       '<div class="primary">' +
-        '<section class="readout" id="readout" data-state="idle" aria-live="polite" aria-label="Radio status">' +
-          '<div class="ro-state"><span class="lamp-big" aria-hidden="true"></span><span id="roState">Connecting</span></div>' +
-          '<div class="ro-call"><span class="ro-label" id="roLabel">&nbsp;</span><span class="ro-callsign" id="roCall">&nbsp;</span></div>' +
-          '<dl class="ro-fields">' +
-            '<div><dt>Target</dt><dd id="roTarget">&nbsp;</dd></div>' +
-            '<div><dt>Mode</dt><dd id="roMode">&nbsp;</dd></div>' +
-            '<div><dt>Source</dt><dd id="roSrc">&nbsp;</dd></div>' +
-            '<div><dt id="roTimeLabel">Duration</dt><dd id="roTime">&nbsp;</dd></div>' +
-          '</dl>' +
-        '</section>' +
+        readoutHtml() +
         '<div id="liveSlot" class="contents"></div>' +
         '<section class="panel" aria-labelledby="gwTitle"><div class="panel-head"><h2 id="gwTitle">Gateway activity</h2>' +
           '<span class="panel-note">Last 100 calls' + (tz ? ', times in ' + tz : '') + '</span></div><div id="gateway" class="activity activity-scroll" tabindex="0" aria-label="Gateway activity, scrollable"></div></section>' +
         '<section class="panel" aria-labelledby="rfTitle"><div class="panel-head"><h2 id="rfTitle">Local RF activity</h2></div><div id="localrf" class="activity"></div></section>' +
-        (cfg.dstarNet ? '<section class="panel" aria-label="D-Star CCS connections"><div id="ccs" class="frag"></div></section>' : '') +
-        (cfg.pocsag ? '<section class="panel" aria-labelledby="pgTitle"><div class="panel-head"><h2 id="pgTitle">POCSAG pages</h2></div><div id="pages" class="frag"></div></section>' : '') +
+        optionalPanels() +
       '</div>' +
       '<aside class="secondary" aria-label="Hotspot status">' +
         '<div id="status" class="contents"></div>' +
@@ -305,9 +367,9 @@
     renderStatus(sections);
     var gw = $('gateway');
     var keep = gw.scrollTop;          // re-rendering must not jump the list back to the top
-    renderList(gw, history || rows.slice(0, LIST_LEN), false);
+    renderList(gw, ADMIN ? rows.slice(0, ADMIN_RECENT) : (history || rows.slice(0, LIST_LEN)), false);
     gw.scrollTop = keep;
-    renderList($('localrf'), rows.filter(function (r) { return r.src === 'RF' && VOICE_MODES.test(r.mode); }).slice(0, LIST_LEN), true);
+    if ($('localrf')) renderList($('localrf'), rows.filter(function (r) { return r.src === 'RF' && VOICE_MODES.test(r.mode); }).slice(0, LIST_LEN), true);
   }
 
   // Re-render between polls so live counters tick smoothly.
@@ -321,6 +383,7 @@
     return r ? [r.time, r.call, r.mode, r.live, r.dur].join('|') : '';
   }
   function wantHistory() {
+    if (ADMIN) return false;           // Admin shows only recent calls
     return !history || Date.now() - historyAt > HISTORY_MS ||
       (lastData && callSig(lastData.lastHeard) !== historySig);
   }
@@ -389,6 +452,13 @@
 
   function renderSystem(s) {
     var html = '';
+    // Admin only: the host details the stock admin panel showed.
+    if (s.host) {
+      html += row('Hostname', esc(s.host.name), '');
+      if (s.host.platform) html += row('Platform', esc(s.host.platform), '');
+      if (s.host.kernel) html += row('Kernel', esc(s.host.kernel), '');
+      if (s.host.ip) html += row('IP address', esc(s.host.ip), '');
+    }
     if (s.tempC != null) {
       var f = Math.round((s.tempC * 9 / 5 + 32) * 10) / 10;
       var tc = s.tempC >= 69 ? 'is-fault' : s.tempC >= 50 ? 'is-warn' : 'is-on';
@@ -432,7 +502,7 @@
 
   (function loadSystem() {
     if (document.hidden) { setTimeout(loadSystem, SYS_MS); return; }
-    fetch('/live/sys.php' + (embed.services ? '?services=1' : ''), { cache: 'no-store' })
+    fetch('/live/sys.php' + (ADMIN ? '?services=1' : ''), { cache: 'no-store' })
       .then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); })
       .then(renderSystem)
       .catch(function () {})

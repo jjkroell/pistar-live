@@ -32,8 +32,9 @@ script, edits none of Pi-Star's files, and removes cleanly.
 **A restyle of the stock pages.** Admin, Configuration, Expert, Wi-Fi, Power, Update, Backup/Restore
 and Live Logs get the same look, with all of Pi-Star's own forms and buttons still doing the work:
 
-- **Admin** uses the new dashboard layout. The talkgroup and link managers (BrandMeister, TGIF, YSF,
-  P25, NXDN, M17, D-Star) still appear and work.
+- **Admin** becomes a control page in the same style: the status strip, system details and service
+  status, the talkgroup and link managers (BrandMeister, TGIF, YSF, P25, NXDN, M17, D-Star) when your
+  setup uses them, shortcuts to every admin tool, and the most recent calls.
 - **Configuration and the Expert editors** get one sticky *Apply Changes* bar instead of a button
   after every section. It shows when you have unsaved changes and stays busy while the Pi applies them.
 - **Power, Backup/Restore and Update** get clear icon buttons in place of the glossy images.

@@ -424,3 +424,55 @@ a:focus-visible, button:focus-visible {
   .lamp-big { animation: none !important; }
   .readout { transition: none; }
 }
+
+/* ---------- Admin control page ---------- */
+
+.sys-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 8px 36px;
+  padding-bottom: 12px;
+}
+.sys-grid h3 { margin: 0 0 6px; font-size: .8rem; font-weight: 600; color: var(--muted); }
+.sys-panel .sys-alert { margin-bottom: 14px; }
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+  padding-bottom: 14px;
+}
+.control {
+  --kind: var(--link);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink);
+  text-decoration: none;
+}
+.control:hover { border-color: var(--kind); }
+.control:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.control-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--kind) 16%, transparent);
+  color: var(--kind);
+}
+.control-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.control-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.control-title { font-weight: 650; font-size: .95rem; }
+.control-desc { color: var(--muted); font-size: .82rem; line-height: 1.35; }
+.control-update { --kind: var(--warn); }
+.control-power { --kind: var(--fault); }
+
+@media (max-width: 700px) {
+  .sys-grid { grid-template-columns: minmax(0, 1fr); }
+}
