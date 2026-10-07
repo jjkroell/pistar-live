@@ -4,6 +4,10 @@ A modern dashboard for [Pi-Star](https://www.pistar.uk/) digital voice hotspots,
 Pi-Star's own Admin, Configuration and Expert pages. It installs on top of a stock Pi-Star with one
 script, edits none of Pi-Star's files, and removes cleanly.
 
+![The live dashboard in dark mode, receiving a call](docs/screenshots/dashboard-dark.png)
+
+<sub>Screenshots use made-up callsigns and settings.</sub>
+
 ## What you get
 
 **A new live dashboard** at `http://<your-pi-star>/live/` (and, by default, at `/`):
@@ -18,6 +22,13 @@ script, edits none of Pi-Star's files, and removes cleanly.
   has been short of power or has throttled its CPU.
 - Light and dark themes, and a layout that works on a phone.
 
+<table>
+<tr>
+<td width="70%"><img src="docs/screenshots/dashboard-light.png" alt="Light theme while the hotspot transmits a network call: the status strip turns red"></td>
+<td width="30%"><img src="docs/screenshots/dashboard-phone.png" alt="The dashboard on a phone"></td>
+</tr>
+</table>
+
 **A restyle of the stock pages.** Admin, Configuration, Expert, Wi-Fi, Power, Update, Backup/Restore
 and Live Logs get the same look, with all of Pi-Star's own forms and buttons still doing the work:
 
@@ -26,6 +37,10 @@ and Live Logs get the same look, with all of Pi-Star's own forms and buttons sti
 - **Configuration and the Expert editors** get one sticky *Apply Changes* bar instead of a button
   after every section. It shows when you have unsaved changes and stays busy while the Pi applies them.
 - **Power, Backup/Restore and Update** get clear icon buttons in place of the glossy images.
+
+![Configuration with the sticky Apply Changes bar showing unsaved changes](docs/screenshots/configuration.png)
+
+![The Power page with Reboot and Shut down buttons](docs/screenshots/power.png)
 
 It is also lighter on the Pi. Each of the stock dashboard's three live panels re-parses the MMDVMHost
 log on its own 1 to 1.5 second timer; this parses it once per update, and stops polling when the tab
