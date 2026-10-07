@@ -1,0 +1,165 @@
+#!/bin/bash
+#
+# Pi-Star Live __VERSION__
+# A modern, read-only live dashboard and a restyle of the stock Pi-Star pages.
+#
+#   sudo bash pistar-live-install.sh              install or upgrade
+#   sudo bash pistar-live-install.sh --uninstall  remove everything it added
+#
+# Options:
+#   --no-skin      install only the new dashboard at /live/; leave the stock
+#                  pages (Admin, Configuration, Expert, ...) looking as they are
+#   --no-landing   keep the stock dashboard at http://<pi-star>/ ; the new one
+#                  is still at /live/
+#
+# Nothing in Pi-Star itself is edited. It adds:
+#   /var/www/dashboard/live/                  the new dashboard
+#   /var/www/dashboard/skin/                  stylesheet + script for stock pages
+#   /etc/nginx/default.d/skin-inject.conf     injects the skin into stock pages
+#   /etc/nginx/default.d/live-landing.conf    sends / to /live/
+#   /opt/pistar-live/                         a copy of this installer (for --uninstall)
+# Pi-Star's nightly update never deletes extra files, so these survive it.
+
+set -euo pipefail
+
+VERSION="__VERSION__"
+DOCROOT="/var/www/dashboard"
+NGINX_D="/etc/nginx/default.d"
+SKIN_CONF="$NGINX_D/skin-inject.conf"
+LANDING_CONF="$NGINX_D/live-landing.conf"
+KEEP_DIR="/opt/pistar-live"            # a copy of this installer, for --uninstall
+
+want_skin=1
+want_landing=1
+action=install
+
+for arg in "$@"; do
+  case "$arg" in
+    --uninstall) action=uninstall ;;
+    --no-skin) want_skin=0 ;;
+    --no-landing) want_landing=0 ;;
+    -h|--help) sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "Unknown option: $arg (try --help)" >&2; exit 2 ;;
+  esac
+done
+
+if [ -t 1 ]; then G=$'\033[32m' Y=$'\033[33m' R=$'\033[31m' N=$'\033[0m'; else G='' Y='' R='' N=''; fi
+say()  { printf '  %s\n' "$*"; }
+ok()   { printf '  %s✓%s %s\n' "$G" "$N" "$*"; }
+warn() { printf '  %s!%s %s\n' "$Y" "$N" "$*"; }
+die()  { printf '  %s✗%s %s\n' "$R" "$N" "$*" >&2; exit 1; }
+
+echo "Pi-Star Live $VERSION"
+
+[ "$(id -u)" -eq 0 ] || die "Run this with sudo:  sudo bash $0 $*"
+[ -f /etc/pistar-release ] || die "This doesn't look like Pi-Star (no /etc/pistar-release)."
+[ -f "$DOCROOT/mmdvmhost/functions.php" ] || die "Pi-Star dashboard not found in $DOCROOT."
+command -v nginx >/dev/null || die "nginx not found."
+
+# Pi-Star keeps / read-only; open it for the copy and put it back afterwards.
+was_ro=0
+if findmnt -no OPTIONS / | tr ',' '\n' | grep -qx ro; then
+  was_ro=1
+  mount -o remount,rw /
+fi
+tmp=""
+cleanup() {
+  [ -n "$tmp" ] && rm -rf "$tmp"
+  if [ "$was_ro" -eq 1 ]; then sync; mount -o remount,ro / 2>/dev/null || true; fi
+}
+trap cleanup EXIT
+
+reload_nginx() {
+  if nginx -t >/dev/null 2>&1; then
+    systemctl reload nginx
+    return 0
+  fi
+  return 1
+}
+
+if [ "$action" = uninstall ]; then
+  rm -f "$SKIN_CONF" "$LANDING_CONF"
+  reload_nginx || warn "nginx config test failed after removing our files; check: sudo nginx -t"
+  rm -rf "$DOCROOT/live" "$DOCROOT/skin" "$KEEP_DIR"
+  ok "Removed. The stock Pi-Star dashboard is back at http://$(hostname)/"
+  exit 0
+fi
+
+# ---- unpack ---------------------------------------------------------------
+tmp="$(mktemp -d)"
+sed -n '/^__PAYLOAD_BELOW__$/,$p' "$0" | tail -n +2 | base64 -d | tar -xz -C "$tmp" \
+  || die "Couldn't unpack the installer. Download it again (and run it with bash, not via a pipe)."
+
+# ---- the dashboard --------------------------------------------------------
+install -d -o www-data -g www-data -m 755 "$DOCROOT/live"
+find "$DOCROOT/live" -mindepth 1 -maxdepth 1 -type f -delete
+install -o www-data -g www-data -m 644 "$tmp"/live/* "$DOCROOT/live/"
+echo "$VERSION" > "$DOCROOT/live/VERSION"; chown www-data:www-data "$DOCROOT/live/VERSION"
+if command -v php >/dev/null; then
+  for f in "$DOCROOT"/live/*.php; do php -l "$f" >/dev/null || die "PHP syntax check failed for $f"; done
+fi
+ok "Dashboard installed at /live/"
+
+mmdvm_mode=0; [ -f /etc/dstar-radio.mmdvmhost ] && mmdvm_mode=1
+
+# Our nginx snippets go in default.d, which Pi-Star's site includes at server level.
+site_includes_default_d=0
+if grep -qs 'default\.d/\*\.conf' /etc/nginx/sites-enabled/* 2>/dev/null; then site_includes_default_d=1; fi
+
+backup="$tmp/nginx-backup"; mkdir -p "$backup"
+cp -a "$SKIN_CONF" "$LANDING_CONF" "$backup/" 2>/dev/null || true
+
+# ---- skin for the stock pages ---------------------------------------------
+rm -f "$SKIN_CONF"
+if [ "$want_skin" -eq 1 ]; then
+  if ! nginx -V 2>&1 | grep -q 'http_sub_module'; then
+    warn "This nginx can't inject the skin (no sub_filter module); stock pages keep their old look."
+  elif [ "$site_includes_default_d" -eq 0 ]; then
+    warn "Pi-Star's nginx site doesn't include $NGINX_D/*.conf; skipping the skin."
+  else
+    install -d -o www-data -g www-data -m 755 "$DOCROOT/skin"
+    install -o www-data -g www-data -m 644 "$tmp"/skin/* "$DOCROOT/skin/"
+    install -o root -g root -m 644 "$tmp/nginx/skin-inject.conf" "$SKIN_CONF"
+    ok "Skin installed for Admin, Configuration, Expert and the other stock pages"
+  fi
+else
+  rm -rf "$DOCROOT/skin"
+  say "Skin skipped (--no-skin)"
+fi
+
+# ---- make /live/ the landing page -----------------------------------------
+rm -f "$LANDING_CONF"
+if [ "$want_landing" -eq 1 ]; then
+  if [ "$mmdvm_mode" -eq 0 ]; then
+    warn "This Pi-Star runs DStarRepeater, not MMDVMHost; keeping the stock landing page."
+  elif [ "$site_includes_default_d" -eq 0 ]; then
+    warn "Can't add the landing redirect (no $NGINX_D include); the new dashboard is at /live/"
+  else
+    install -o root -g root -m 644 "$tmp/nginx/live-landing.conf" "$LANDING_CONF"
+    ok "http://$(hostname)/ now opens the new dashboard (classic view: /index.php)"
+  fi
+else
+  say "Landing page unchanged (--no-landing); new dashboard is at /live/"
+fi
+
+# ---- apply ----------------------------------------------------------------
+if ! reload_nginx; then
+  rm -f "$SKIN_CONF" "$LANDING_CONF"
+  cp -a "$backup"/*.conf "$NGINX_D/" 2>/dev/null || true
+  reload_nginx || true
+  die "nginx rejected the new config, so it was rolled back. Details: sudo nginx -t"
+fi
+ok "nginx reloaded"
+
+# Keep a copy so it can be removed later without re-downloading.
+self="$(readlink -f "$0")"
+if [ "$self" != "$KEEP_DIR/pistar-live-install.sh" ]; then
+  install -d -m 755 "$KEEP_DIR"
+  install -m 755 "$self" "$KEEP_DIR/pistar-live-install.sh"
+fi
+
+echo
+say "Done. Open http://$(hostname)/live/  (or http://$(hostname -I | awk '{print $1}')/live/)"
+say "Remove it any time with:  sudo bash $KEEP_DIR/pistar-live-install.sh --uninstall"
+exit 0
+__PAYLOAD_BELOW__

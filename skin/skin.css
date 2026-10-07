@@ -1,0 +1,701 @@
+/*
+ * Pi-Star skin: restyles the stock dashboard, admin and expert pages.
+ * Injected by nginx (sub_filter on </head>), so no Pi-Star file is edited.
+ * Loaded after the stock stylesheets; inline-colour overrides need !important.
+ */
+
+:root {
+  --page: #e9edef;
+  --surface: #ffffff;
+  --surface-2: #f3f5f6;
+  --line: #d3dade;
+  --ink: #18222a;
+  --muted: #5b6a73;
+  --link: #1f5f8b;
+  --on: #1e9a52;
+  --off: #b9c3c8;
+  --fault: #d23b30;
+  --warn: #c77a00;
+  --accent: #ffb547;
+  --accent-ink: #2a1d05;
+  --field: #ffffff;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  --radius-lg: 12px;
+  --radius-sm: 6px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #161d22; --surface: #1f282e; --surface-2: #253037; --line: #33424b;
+    --ink: #e4e9eb; --muted: #8d9ca4; --link: #8cc4ec;
+    --on: #3fd37a; --off: #46545c; --fault: #ff6a5c; --warn: #f0a531;
+    --field: #182025;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #161d22; --surface: #1f282e; --surface-2: #253037; --line: #33424b;
+  --ink: #e4e9eb; --muted: #8d9ca4; --link: #8cc4ec;
+  --on: #3fd37a; --off: #46545c; --fault: #ff6a5c; --warn: #f0a531;
+  --field: #182025;
+  color-scheme: dark;
+}
+
+/* ---------- Page frame ---------- */
+
+html body, html body font {
+  background: var(--page);
+  color: var(--ink);
+  font: 14px/1.45 var(--sans);
+}
+html .container {
+  width: auto;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* Header: the red banner becomes a quiet title row with a link bar.
+   A fixed grid (title left, links right, extra link rows below) so nothing
+   reflows as pages change or as skin.js adds the theme button. */
+html .header {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 24px;
+  padding: 22px 0 14px;
+  background: transparent;
+  color: var(--ink);
+  border-radius: 0;
+  font-family: var(--sans);
+}
+html .header > h1 {
+  grid-column: 1;
+  grid-row: 1;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  text-shadow: none;
+  color: var(--ink);
+}
+html .header > div {
+  grid-column: 1;
+  float: none !important;
+  padding: 0 !important;
+  font-size: .75rem !important;
+  line-height: 1.5;
+  text-align: left !important;
+  color: var(--muted);
+}
+/* Link bars separate links with " | " text; font-size 0 hides it. */
+/* update.php wraps its link bar in <nav>; let that <p> sit in the header grid too. */
+html .header > nav { display: contents; }
+html .header > p, html .header > nav > p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 0 !important;
+  font-size: 0;
+  color: transparent !important;
+}
+html .header > p:first-of-type, html .header > nav > p:first-of-type {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  justify-content: flex-end;
+  max-width: 640px;
+  padding-right: 44px !important;   /* room for the theme button */
+}
+html .header > p:nth-of-type(n+2) {
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  padding-top: 10px !important;
+  border-top: 1px solid var(--line);
+  row-gap: 4px;
+}
+html .header > p:nth-of-type(n+2) br { display: none; }
+/* Group labels ("Quick Edit:", "Full Edit:", "Tools:") start a new row. */
+html .header > p:nth-of-type(n+2) b {
+  flex-basis: 100%;
+  text-align: left;
+  margin: 6px 0 0;
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+html .header > p:nth-of-type(n+2) b:first-child { margin-top: 0; }
+html .header p a, html .header p a:link, html .header p a:visited {
+  font-size: .88rem;
+  font-weight: 400;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--ink) !important;
+}
+html .header p a:hover { background: var(--surface); }
+html .header p a[aria-current="page"] { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+html .ps-theme {
+  position: absolute;
+  top: 22px;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 50% !important;
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  font-size: 0;
+  cursor: pointer;
+}
+.ps-theme svg { width: 15px; height: 15px; fill: currentColor; }
+
+/* Dashboard two-column layout (classic index + admin index). */
+html .nav {
+  float: left;
+  width: 230px;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+}
+html .content, html .contentwide {
+  margin: 0 0 0 250px;
+  padding: 0 0 20px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+html .contentwide { margin: 0; }
+html .nav table { margin-bottom: 14px; }
+html .nav br, html .content > br, html .contentwide > br { display: none; }
+html .content > div, html .contentwide > form, html .contentwide > table, html .contentwide > div { margin-bottom: 18px; }
+
+html .contentwide h2, html .content h2, html .content > div > b, html .contentwide > b, html .content > b {
+  display: block;
+  margin: 22px 0 8px;
+  padding: 0;
+  font: 650 1rem/1.3 var(--sans);
+  text-align: left;
+  color: var(--ink);
+}
+
+/* ---------- Tables ---------- */
+
+html table {
+  width: 100%;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  white-space: normal;
+  overflow: hidden;
+}
+html table tr:nth-child(even), html table tr:nth-child(odd) { background: transparent; }
+html table th {
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  font: 600 .78rem/1.3 var(--sans);
+  text-shadow: none;
+  text-align: left;
+}
+html table td {
+  padding: 7px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font: .9rem/1.4 var(--sans);
+  text-align: left;
+}
+html table tr:last-child > td { border-bottom: 0; }
+html table td b { font-weight: 650; }
+/* The classic sidebar packs label/value pairs; keep those compact. */
+html .nav table th, html .nav table td { padding: 5px 8px; font-size: .8rem; }
+html .nav table td { text-align: center; }
+
+/* Stock status colours, written as inline backgrounds, mapped to the palette. */
+html td[style*="#0b0"], html td[style*="#1d1"], html td[style*="#4aa361"], html td[style*="#0f0"] {
+  background: color-mix(in srgb, var(--on) 16%, transparent) !important;
+  color: var(--on) !important;
+  font-weight: 600;
+}
+html td[style*="#606060"] {
+  background: transparent !important;
+  color: var(--muted) !important;
+}
+html td[style*="#f33"], html td[style*="#b00"], html td[style*="#b55"], html td[style*="#f00"] {
+  background: color-mix(in srgb, var(--fault) 16%, transparent) !important;
+  color: var(--fault) !important;
+  font-weight: 600;
+}
+html td[style*="#fa0"], html td[style*="#f93"], html td[style*="#ff9"], html td[style*="#ade"], html td[style*="#f9f"], html td[style*="#c9f"] {
+  background: color-mix(in srgb, var(--warn) 16%, transparent) !important;
+  color: var(--warn) !important;
+  font-weight: 600;
+}
+html td[style*="#ffffff"] { background: transparent !important; }
+
+/* ---------- Links and tooltips ---------- */
+
+html a:link, html a:visited { color: var(--link); }
+html a.tooltip, html a.tooltip:link, html a.tooltip:visited, html a.tooltip:active, html a.tooltip:hover {
+  color: inherit;
+}
+html a.tooltip2, html a.tooltip2:link, html a.tooltip2:visited, html a.tooltip2:active, html a.tooltip2:hover {
+  color: var(--ink);
+  font-weight: 600;
+  cursor: help;
+}
+html a.tooltip:hover span, html a.tooltip2:hover span {
+  width: 280px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 400 .85rem/1.45 var(--sans);
+  white-space: normal;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+  top: 22px;
+}
+html a.tooltip span b, html a.tooltip2 span b {
+  margin: 0 0 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 650 .85rem/1.3 var(--sans);
+}
+
+/* ---------- Form controls ---------- */
+
+html input, html select, html textarea, html button {
+  font: .9rem var(--sans);
+  color: var(--ink);
+}
+html input[type="text"], html input[type="password"], html input[type="number"], html input[type="email"],
+html input:not([type]), html select, html textarea {
+  min-height: 32px;
+  margin: 2px 4px 2px 0;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background-color: var(--field);
+  color: var(--ink);
+}
+html textarea { font-family: var(--mono); font-size: .82rem; }
+html input:focus, html select:focus, html textarea:focus {
+  outline: 2px solid var(--link);
+  outline-offset: 0;
+  border-color: transparent;
+}
+html input[type="button"], html input[type="submit"], html button {
+  min-height: 32px;
+  margin: 2px 4px 2px 0;
+  padding: 5px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+html input[type="button"]:hover, html input[type="submit"]:hover, html button:hover { border-color: var(--muted); }
+html input[type="button"]:disabled, html input[type="submit"]:disabled, html button:disabled { opacity: .45; cursor: not-allowed; }
+/* The save buttons are the main action on every settings page. */
+html input[value="Apply Changes"], html input[value="Save Changes"], html input[value="Apply"], html input[value="Save"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+html input[value="Apply Changes"]:hover, html input[value="Save Changes"]:hover { filter: brightness(1.06); }
+html input[type="radio"], html input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  margin: 0 5px 0 0;
+  vertical-align: -3px;
+}
+html .contentwide form > div, html .content form > div { margin: 10px 0 4px; text-align: left; }
+
+/* Stock on/off switches. */
+html input.toggle-round-flat + label {
+  width: 40px;
+  height: 22px;
+  padding: 0;
+  border-radius: 999px;
+  background-color: var(--off);
+}
+html input.toggle-round-flat + label:before { display: none; }
+html input.toggle-round-flat + label:after {
+  top: 3px;
+  left: 3px;
+  bottom: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+}
+html input.toggle-round-flat:checked + label { background-color: var(--on); }
+html input.toggle-round-flat:checked + label:after { margin-left: 18px; background: #fff; }
+html .toggle + label:focus-visible, html input.toggle-round-flat:focus-visible + label { outline: 2px solid var(--link); outline-offset: 2px; }
+
+/* nice-select searchable dropdowns (DMR master, timezone, modem). */
+html .nice-select {
+  min-height: 32px;
+  height: auto;
+  line-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--field);
+  color: var(--ink);
+  font: .9rem/30px var(--sans);
+}
+html .nice-select.small { height: 32px !important; min-height: 32px !important; line-height: 30px !important; }
+html .nice-select:after { border-color: var(--muted); }
+html .nice-select-dropdown, html .nice-select .list {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+}
+html .nice-select .option { color: var(--ink); }
+html .nice-select .option:hover, html .nice-select .option.focus, html .nice-select .option.selected.focus { background: var(--surface-2); }
+html .nice-select .nice-select-search {
+  background: var(--field);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+/* Logs (live log, update, upgrade output). */
+html #tail, html pre {
+  display: block;
+  max-width: 100%;
+  overflow: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2) !important;
+  color: var(--ink) !important;
+  font: .8rem/1.5 var(--mono) !important;
+  text-align: left;
+}
+
+html iframe { width: 100%; border: 0; display: block; }
+
+/* ---------- Footer ---------- */
+
+html .footer {
+  margin: 24px 0 0;
+  padding: 16px 0 32px;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  font: .78rem/1.6 var(--sans);
+  text-align: left;
+  clear: both;
+}
+html .footer a, html .footer a:link, html .footer a:visited { color: var(--link) !important; }
+
+/* ---------- Wi-Fi panel (wifi.php, shown in an iframe on Configuration) ---------- */
+
+html body.ps-wifi, html body:has(> .infobox) { background: var(--surface); margin: 0; padding: 10px 12px; }
+html .infobox {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px 14px;
+  background: transparent;
+  font-weight: 400;
+}
+html .infobox > form, html .infobox > .infoheader { grid-column: 1 / -1; }
+html .infobox > br { display: none; }
+html .infoheader {
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  text-align: left;
+  font: 650 .95rem/1.3 var(--sans);
+}
+html .intinfo, html .wifiinfo, html .network {
+  float: none;
+  width: auto;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: .8rem/1.6 var(--mono);
+  text-align: left;
+}
+html .intheader {
+  margin: 0 0 6px;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font: 600 .78rem/1.3 var(--sans);
+  text-align: left;
+}
+html .intinfo br + br + .intheader { margin-top: 0; }
+html .intfooter {
+  margin-top: 10px;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font: .75rem var(--sans);
+  text-align: left;
+}
+html .tail { display: none; }
+html span[style*="color:green"] { color: var(--on) !important; }
+html span[style*="color:red"] { color: var(--fault) !important; }
+html .green { color: var(--on); }
+html .red { color: var(--fault); }
+
+/* ---------- Narrow screens ---------- */
+
+@media (max-width: 829px) {
+  html .container { padding: 0 16px; }
+  html .header { grid-template-columns: minmax(0, 1fr); }
+  html .header > h1 { padding-right: 44px; font-size: 1.3rem; }
+  html .header > p:first-of-type, html .header > nav > p:first-of-type { grid-column: 1; grid-row: auto; justify-content: flex-start; max-width: none; padding-right: 0 !important; margin-left: -10px; }
+  html .header > p:nth-of-type(n+2) { margin-left: 0; }
+  html .ps-theme { top: 20px; }
+  html .nav { float: none; width: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  html .content { margin: 0; }
+  /* Wide settings tables scroll sideways instead of overflowing the page. */
+  html .content table, html .contentwide table { display: block; overflow-x: auto; }
+  html table td, html table th { white-space: nowrap; }
+}
+
+/* ---------- Page-specific touches ---------- */
+
+/* Live log fills the panel instead of the stock fixed 800px box. */
+html #tail { width: auto !important; height: 62vh !important; min-height: 280px; }
+
+/* Admin index: tighten the gap between the hardware panel and the dashboard. */
+html .contentwide + .nav, html .contentwide ~ .nav { margin-top: 0; }
+html .container > .contentwide:first-of-type { padding-bottom: 4px; }
+
+/* Pi-Star tints some inputs (e.g. green for a valid frequency); keep their text readable. */
+html input[style*="background"] { color: #10210f !important; }
+
+/* Phones: settings rows stack as label, then controls. */
+@media (max-width: 829px) {
+  html .contentwide form table { display: block; overflow: visible; }
+  html .contentwide form table > tbody { display: block; }
+  html .contentwide form table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  html .contentwide form table tr:last-child { border-bottom: 0; }
+  html .contentwide form table tr:has(> th) { display: none; }
+  html .contentwide form table td {
+    display: block;
+    width: auto !important;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+    text-align: left !important;
+  }
+  html .contentwide form table td:first-child { flex: 1 1 auto; }
+  html .contentwide form table td:has(> div.switch) { flex: 0 0 auto; }
+  html .contentwide form table td:first-child:has(+ td .nice-select) { flex-basis: 100%; }
+  html .contentwide form table input[name$="HangTime"] { width: 64px; }
+  html .contentwide form table td:empty { display: none; }
+  html .contentwide form table td { min-width: 0; max-width: 100%; }
+  /* Long searchable dropdowns (modem type, DMR master) truncate instead of widening the page. */
+  html .contentwide form .nice-select { max-width: calc(100vw - 60px); }
+  html .contentwide form .nice-select .current { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 18px; }
+  html .contentwide form .nice-select-dropdown { max-width: calc(100vw - 48px); }
+  html .contentwide form .nice-select .option { white-space: normal; line-height: 1.35 !important; height: auto !important; padding-top: 6px; padding-bottom: 6px; }
+  html .contentwide form table input[type="text"], html .contentwide form table input[type="password"],
+  html .contentwide form table input:not([type]), html .contentwide form table select { max-width: 100%; }
+}
+
+html [hidden] { display: none !important; }
+
+/* ---------- Configuration: sticky apply bar ---------- */
+
+html .ps-applybar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 20px 0 0;
+  padding: 10px 12px 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .28);
+}
+html .ps-applybar-msg { color: var(--muted); font-size: .9rem; }
+html .ps-applybar.is-dirty { border-color: var(--accent); }
+html .ps-applybar.is-dirty .ps-applybar-msg { color: var(--ink); font-weight: 600; }
+html .ps-applybar .ps-applybar-btn {
+  margin: 0;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* ---------- Admin: the /live/ layout mounted inside the stock page ---------- */
+
+html .ps-embed .layout { max-width: none; padding: 0 0 8px; }
+html .ps-embed table.act {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+html .ps-embed .act th { background: transparent; }
+html .ps-embed .panel h2, html .ps-embed .card h2 { margin: 0; font-size: 1rem; }
+html .ps-embed .card h2 { margin-bottom: 10px; }
+html .ps-embed .readout { font-family: var(--mono); }
+/* Admin tools keep their stock markup; give each one breathing room. */
+html .ps-tools { display: grid; gap: 16px; padding-bottom: 14px; }
+html .ps-tools > b, html .ps-tools > div > b { display: block; margin: 0 0 8px; font: 650 1rem/1.3 var(--sans); }
+html .ps-tools br { display: none; }
+html body.ps-admin-live .container { max-width: 1280px; }
+
+/* Stock link colours/weights must not leak into the live layout. */
+html .ps-embed .call a:link, html .ps-embed .call a:visited { color: var(--ink); font-weight: inherit; }
+html .ps-embed .call a:hover { color: var(--link); }
+html .ps-embed .ro-callsign a:link, html .ps-embed .ro-callsign a:visited { color: inherit; font-weight: inherit; }
+html .ps-embed .aprs:link, html .ps-embed .aprs:visited { color: var(--muted); }
+
+/* ---------- Static Apply buttons (replaced by the sticky bar) ---------- */
+
+html .ps-static-apply { display: none !important; }
+html .ps-static-apply + br { display: none; }
+
+/* ---------- Power and Backup: icon buttons ---------- */
+
+html td:has(> .ps-action) { padding: 14px; vertical-align: top; text-align: left !important; }
+html button.ps-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 16px !important;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  color: var(--ink);
+  text-align: left;
+  font-weight: 400;
+}
+html .ps-action-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--kind) 16%, transparent);
+  color: var(--kind);
+}
+html .ps-action-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+html .ps-action-text { display: flex; flex-direction: column; gap: 3px; }
+html .ps-action-title { font-size: 1rem; font-weight: 650; }
+html .ps-action-desc { color: var(--muted); font-size: .85rem; line-height: 1.4; }
+html button.ps-action:hover { border-color: var(--kind); }
+html .ps-action-reboot { --kind: var(--accent); }
+html .ps-action-shutdown { --kind: var(--fault); }
+html .ps-action-download { --kind: var(--link); }
+html .ps-action-restore { --kind: var(--warn); }
+html .ps-file { display: block; margin: 14px 0 6px; color: var(--muted); font-size: .8rem; font-weight: 600; }
+html input[type="file"] { display: block; margin: 0 0 12px; color: var(--muted); font-size: .85rem; }
+html input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: 600 .85rem var(--sans);
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  html table:has(.ps-action) tr { display: flex; flex-direction: column; }
+  html table:has(.ps-action) td { display: block; width: auto !important; }
+}
+
+/* Stock CSS floats every list item (for an old menu); lists inside content read as lists. */
+html td ul { float: none; margin: 6px 0; padding: 0 0 0 20px; list-style: disc; }
+html td ul li { float: none; display: list-item; margin: 2px 0; }
+
+/* Without their per-section Apply buttons, editor sections need their own spacing. */
+html .contentwide form > table { margin-bottom: 16px; }
+
+/* Apply bar while a save is in progress. */
+html .ps-applybar.is-busy { border-color: var(--accent); }
+html .ps-applybar.is-busy .ps-applybar-msg { color: var(--ink); }
+html .ps-applybar.is-busy .ps-applybar-btn { opacity: .75; cursor: progress; }
+html .ps-applybar.is-busy .ps-applybar-btn::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  vertical-align: -1px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ps-spin .8s linear infinite;
+}
+@keyframes ps-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { html .ps-applybar.is-busy .ps-applybar-btn::before { animation: none; } }
+
+/* Update / Upgrade start buttons. */
+html .ps-action-update, html .ps-action-upgrade { --kind: var(--accent); max-width: 560px; margin: 0 auto !important; }
+html td:has(> .ps-action-update) p, html td:has(> .ps-action-upgrade) p { max-width: 560px; margin: 0 auto 16px !important; color: var(--muted); text-align: left; }
+html td:has(> .ps-action-update) p strong, html td:has(> .ps-action-upgrade) p strong { color: var(--ink); }
+
+/* Stock 20px LED images become flat status dots (the image is shifted out of view). */
+html img[src$="20green.png"], html img[src$="20red.png"] {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50%;
+  object-position: -999px 0;
+  vertical-align: middle;
+}
+html img[src$="20green.png"] { background: var(--on); box-shadow: 0 0 0 3px color-mix(in srgb, var(--on) 22%, transparent); }
+html img[src$="20red.png"] { background: var(--fault); box-shadow: 0 0 0 3px color-mix(in srgb, var(--fault) 22%, transparent); }
+html .ps-embed .activity-scroll .act thead th { background: var(--surface); }
