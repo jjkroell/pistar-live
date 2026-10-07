@@ -43,6 +43,8 @@ and Live Logs get the same look, with all of Pi-Star's own forms and buttons sti
 
 ![Configuration with the sticky Apply Changes bar showing unsaved changes](docs/screenshots/configuration.png)
 
+![The MMDVMHost expert editor with grouped editor links and one Apply Changes bar](docs/screenshots/expert.png)
+
 ![The Power page with Reboot and Shut down buttons](docs/screenshots/power.png)
 
 ![Backup/Restore with Download and Restore buttons and the backup file picker](docs/screenshots/backup.png)
