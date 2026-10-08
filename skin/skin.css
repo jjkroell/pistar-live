@@ -392,7 +392,16 @@ html input[style*="background"] { color: #10210f !important; }
   html .contentwide form table td:first-child { flex: 1 1 auto; }
   html .contentwide form table td:has(> div.switch) { flex: 0 0 auto; }
   html .contentwide form table td:first-child:has(+ td .nice-select) { flex-basis: 100%; }
-  html .contentwide form table input[name$="HangTime"] { width: 64px; }
+  /* Mode rows: "RF Hangtime: [ ] Net Hangtime: [ ]" is bare text plus inputs. As a grid the text
+     runs become cells, so each label stays beside its own box, one pair per line. */
+  html .contentwide form table td:has(> input[name$="HangTime"]) {
+    flex-basis: 100%;
+    display: grid !important;
+    grid-template-columns: max-content 76px;
+    align-items: center;
+    gap: 6px 12px;
+  }
+  html .contentwide form table input[name$="HangTime"] { box-sizing: border-box; width: 76px; margin: 0; }
   html .contentwide form table td:empty { display: none; }
   html .contentwide form table td { min-width: 0; max-width: 100%; }
   /* Long searchable dropdowns (modem type, DMR master) truncate instead of widening the page. */
