@@ -83,7 +83,7 @@ because the installer makes the filesystem writable while it works and sets it b
 when it finishes.
 
 Run it as a file as shown. Piping it straight into `bash` won't work, because the files it installs
-are packed inside the script. Running it again upgrades in place.
+are packed inside the script. Running it again upgrades in place (see [Update to a new version](#update-to-a-new-version)).
 
 Options:
 
@@ -94,6 +94,35 @@ Options:
 | `--uninstall`  | Remove everything it added.                                                                    |
 
 The classic dashboard stays available at `/index.php`.
+
+### Update to a new version
+
+Check which version you have:
+
+```sh
+cat /var/www/dashboard/live/VERSION
+```
+
+To update, download the latest installer and run it again. It replaces the old files in place, and
+your Pi-Star settings are not touched:
+
+```sh
+cd /tmp
+wget -O pistar-live-install.sh https://github.com/jjkroell/pistar-live/releases/latest/download/pistar-live-install.sh
+sudo bash pistar-live-install.sh
+```
+
+- `-O` overwrites any older copy left in `/tmp`; without it, `wget` saves the new one as
+  `pistar-live-install.sh.1` and you would run the old version again.
+- The installer doesn't remember the options you used before. If you installed with `--no-skin` or
+  `--no-landing`, add them again, for example `sudo bash pistar-live-install.sh --no-skin`.
+- Your browser picks up the new version by itself; no cache clearing needed. If a page still looks
+  old, reload it once.
+- This is separate from Pi-Star's own **Update** and **Upgrade** (in the Tools menu). Those update
+  Pi-Star itself and leave Pi-Star Live in place, so there's nothing to reinstall afterwards.
+
+To go back to an earlier version, download that release's installer from the
+[releases page](https://github.com/jjkroell/pistar-live/releases) and run it the same way.
 
 ### Uninstall
 
