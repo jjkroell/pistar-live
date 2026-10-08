@@ -1,6 +1,7 @@
 /*
  * Pi-Star skin helper, injected into every stock page by nginx.
- *  - theme (shared with /live/), current-page link, theme toggle
+ *  - the header, nav and theme toggle come from /live/shell.js (injected
+ *    alongside); this file only reshapes page content
  *  - Configuration: sticky "Apply changes" bar for the main settings form
  *  - Admin: swaps the stock dashboard for the /live/ layout, keeping every
  *    admin tool (talkgroup, reflector and link managers) working in place.
@@ -8,39 +9,12 @@
 (function () {
   'use strict';
   var LIVE_V = '4';   // bump with /live/app.css or app.js changes (cache)
-  var root = document.documentElement;
-  try { var t = localStorage.getItem('live-theme'); if (t) root.dataset.theme = t; } catch (e) {}
-
   function each(list, fn) { Array.prototype.forEach.call(list, fn); }
 
-  /* ---------- Header: current page + theme toggle ---------- */
+  /* ---------- Wi-Fi panel (an iframe on Configuration) ---------- */
 
-  function header() {
+  function wifiPanel() {
     if (/\/admin\/wifi\.php/.test(location.pathname)) document.body.classList.add('ps-wifi');
-
-    var bar = document.querySelector('.header p');
-    if (!bar) return;
-    var here = location.pathname.replace(/\/index\.php$/, '/');
-    each(bar.querySelectorAll('a'), function (a) {
-      var p = a.pathname && a.pathname.replace(/\/index\.php$/, '/');
-      if (p && p === here && a.protocol !== 'javascript:') a.setAttribute('aria-current', 'page');
-    });
-
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'ps-theme';
-    b.setAttribute('aria-label', 'Switch colour theme');
-    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg>';
-    b.addEventListener('click', function () {
-      var dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-      root.dataset.theme = dark ? 'light' : 'dark';
-      try { localStorage.setItem('live-theme', root.dataset.theme); } catch (e) {}
-      // Keep the embedded Wi-Fi panel in step.
-      each(document.querySelectorAll('iframe'), function (f) {
-        try { f.contentDocument.documentElement.dataset.theme = root.dataset.theme; } catch (e) {}
-      });
-    });
-    bar.appendChild(b);
   }
 
   /* ---------- Settings pages: one sticky apply bar ---------- */
@@ -204,8 +178,9 @@
     var sys = document.getElementById('sysInfo');
     var sysWrap = sys && sys.closest('.contentwide');
 
-    fetch('/live/cfg.php', { cache: 'no-store', credentials: 'same-origin' })
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    // The shell has already fetched the settings for the header.
+    if (!window.PistarShell) return;
+    window.PistarShell.cfg
       .then(function (cfg) {
         var mount = document.createElement('div');
         mount.id = 'liveRoot';
@@ -270,7 +245,7 @@
 
   function ready() {
     tooltips();
-    header();
+    wifiPanel();
     settingsPages();
     actionButtons();
     adminLayout();

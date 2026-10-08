@@ -4,161 +4,31 @@
  * Loaded after the stock stylesheets; inline-colour overrides need !important.
  */
 
-:root {
-  --page: #e9edef;
-  --surface: #ffffff;
-  --surface-2: #f3f5f6;
-  --line: #d3dade;
-  --ink: #18222a;
-  --muted: #5b6a73;
-  --link: #1f5f8b;
-  --on: #1e9a52;
-  --off: #b9c3c8;
-  --fault: #d23b30;
-  --warn: #c77a00;
-  --accent: #ffb547;
-  --accent-ink: #2a1d05;
-  --field: #ffffff;
-  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-  --radius-lg: 12px;
-  --radius-sm: 6px;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --page: #161d22; --surface: #1f282e; --surface-2: #253037; --line: #33424b;
-    --ink: #e4e9eb; --muted: #8d9ca4; --link: #8cc4ec;
-    --on: #3fd37a; --off: #46545c; --fault: #ff6a5c; --warn: #f0a531;
-    --field: #182025;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --page: #161d22; --surface: #1f282e; --surface-2: #253037; --line: #33424b;
-  --ink: #e4e9eb; --muted: #8d9ca4; --link: #8cc4ec;
-  --on: #3fd37a; --off: #46545c; --fault: #ff6a5c; --warn: #f0a531;
-  --field: #182025;
-  color-scheme: dark;
-}
+/* Tokens and the Saira font come from /live/shell.css, injected just before this file. */
 
 /* ---------- Page frame ---------- */
 
 html body, html body font {
-  background: var(--page);
+  background: var(--chassis);
   color: var(--ink);
-  font: 14px/1.45 var(--sans);
+  font: 14px/1.45 var(--font);
 }
 html .container {
   width: auto;
-  max-width: 1180px;
+  max-width: var(--page-w);
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 var(--gutter);
   background: transparent;
   box-shadow: none;
   border-radius: 0;
 }
 
-/* Header: the red banner becomes a quiet title row with a link bar.
-   A fixed grid (title left, links right, extra link rows below) so nothing
-   reflows as pages change or as skin.js adds the theme button. */
-html .header {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 4px 24px;
-  padding: 22px 0 14px;
-  background: transparent;
-  color: var(--ink);
-  border-radius: 0;
-  font-family: var(--sans);
-}
-html .header > h1 {
-  grid-column: 1;
-  grid-row: 1;
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.25;
-  text-align: left;
-  text-shadow: none;
-  color: var(--ink);
-}
-html .header > div {
-  grid-column: 1;
-  float: none !important;
-  padding: 0 !important;
-  font-size: .75rem !important;
-  line-height: 1.5;
-  text-align: left !important;
-  color: var(--muted);
-}
-/* Link bars separate links with " | " text; font-size 0 hides it. */
-/* update.php wraps its link bar in <nav>; let that <p> sit in the header grid too. */
-html .header > nav { display: contents; }
-html .header > p, html .header > nav > p {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px;
-  margin: 0;
-  padding: 0 !important;
-  font-size: 0;
-  color: transparent !important;
-}
-html .header > p:first-of-type, html .header > nav > p:first-of-type {
-  grid-column: 2;
-  grid-row: 1 / span 3;
-  justify-content: flex-end;
-  max-width: 640px;
-  padding-right: 44px !important;   /* room for the theme button */
-}
-html .header > p:nth-of-type(n+2) {
-  grid-column: 1 / -1;
-  margin-top: 10px;
-  padding-top: 10px !important;
-  border-top: 1px solid var(--line);
-  row-gap: 4px;
-}
-html .header > p:nth-of-type(n+2) br { display: none; }
-/* Group labels ("Quick Edit:", "Full Edit:", "Tools:") start a new row. */
-html .header > p:nth-of-type(n+2) b {
-  flex-basis: 100%;
-  text-align: left;
-  margin: 6px 0 0;
-  font-size: .75rem;
-  font-weight: 600;
-  color: var(--muted);
-}
-html .header > p:nth-of-type(n+2) b:first-child { margin-top: 0; }
-html .header p a, html .header p a:link, html .header p a:visited {
-  font-size: .88rem;
-  font-weight: 400;
-  padding: 5px 10px;
-  border-radius: var(--radius-sm);
-  color: var(--ink) !important;
-}
-html .header p a:hover { background: var(--surface); }
-html .header p a[aria-current="page"] { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
-html .ps-theme {
-  position: absolute;
-  top: 22px;
-  right: 0;
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  margin: 0;
-  padding: 0 !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 50% !important;
-  background: var(--surface) !important;
-  color: var(--ink) !important;
-  font-size: 0;
-  cursor: pointer;
-}
-.ps-theme svg { width: 15px; height: 15px; fill: currentColor; }
+/* Pi-Star's own header is replaced by the faceplate (shell.js), which keeps
+   any of its links the new nav lacks. Without the shell it stays visible. */
+html.has-shell .header { display: none; }
+html.has-shell body { margin: 0; }
+/* A stock table whose heading only repeats the page title (shell.js marks it). */
+html .ps-dup-title { display: none; }
 
 /* Dashboard two-column layout (classic index + admin index). */
 html .nav {
@@ -184,7 +54,7 @@ html .contentwide h2, html .content h2, html .content > div > b, html .contentwi
   display: block;
   margin: 22px 0 8px;
   padding: 0;
-  font: 650 1rem/1.3 var(--sans);
+  font: 650 1rem/1.3 var(--font);
   text-align: left;
   color: var(--ink);
 }
@@ -194,38 +64,38 @@ html .contentwide h2, html .content h2, html .content > div > b, html .contentwi
 html table {
   width: 100%;
   margin: 0;
-  border: 1px solid var(--line);
+  border: 1px solid var(--engrave);
   border-collapse: separate;
   border-spacing: 0;
-  border-radius: var(--radius-lg);
-  background: var(--surface);
+  border-radius: var(--r);
+  background: var(--panel);
   color: var(--ink);
-  font-family: var(--sans);
+  font-family: var(--font);
   white-space: normal;
   /* No overflow clipping: the settings help popups must be able to leave the table.
      Corner cells carry the rounding instead. */
 }
-html table > tbody > tr:first-child > :first-child, html table > tr:first-child > :first-child { border-top-left-radius: calc(var(--radius-lg) - 1px); }
-html table > tbody > tr:first-child > :last-child, html table > tr:first-child > :last-child { border-top-right-radius: calc(var(--radius-lg) - 1px); }
-html table > tbody > tr:last-child > :first-child, html table > tr:last-child > :first-child { border-bottom-left-radius: calc(var(--radius-lg) - 1px); }
-html table > tbody > tr:last-child > :last-child, html table > tr:last-child > :last-child { border-bottom-right-radius: calc(var(--radius-lg) - 1px); }
+html table > tbody > tr:first-child > :first-child, html table > tr:first-child > :first-child { border-top-left-radius: calc(var(--r) - 1px); }
+html table > tbody > tr:first-child > :last-child, html table > tr:first-child > :last-child { border-top-right-radius: calc(var(--r) - 1px); }
+html table > tbody > tr:last-child > :first-child, html table > tr:last-child > :first-child { border-bottom-left-radius: calc(var(--r) - 1px); }
+html table > tbody > tr:last-child > :last-child, html table > tr:last-child > :last-child { border-bottom-right-radius: calc(var(--r) - 1px); }
 html table tr:nth-child(even), html table tr:nth-child(odd) { background: transparent; }
 html table th {
   padding: 8px 10px;
   border: 0;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-2);
+  border-bottom: 1px solid var(--engrave);
+  background: var(--panel-2);
   color: var(--muted);
-  font: 600 .78rem/1.3 var(--sans);
+  font: 600 .78rem/1.3 var(--font);
   text-shadow: none;
   text-align: left;
 }
 html table td {
   padding: 7px 10px;
   border: 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--engrave);
   color: var(--ink);
-  font: .9rem/1.4 var(--sans);
+  font: .9rem/1.4 var(--font);
   text-align: left;
 }
 html table tr:last-child > td { border-bottom: 0; }
@@ -270,11 +140,11 @@ html a.tooltip2, html a.tooltip2:link, html a.tooltip2:visited, html a.tooltip2:
 html a.tooltip:hover span, html a.tooltip2:hover span {
   width: 280px;
   padding: 10px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--engrave);
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--panel);
   color: var(--ink);
-  font: 400 .85rem/1.45 var(--sans);
+  font: 400 .85rem/1.45 var(--font);
   white-space: normal;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
   top: 22px;
@@ -285,13 +155,13 @@ html a.tooltip span b, html a.tooltip2 span b {
   border: 0;
   background: transparent;
   color: var(--ink);
-  font: 650 .85rem/1.3 var(--sans);
+  font: 650 .85rem/1.3 var(--font);
 }
 
 /* ---------- Form controls ---------- */
 
 html input, html select, html textarea, html button {
-  font: .9rem var(--sans);
+  font: .9rem var(--font);
   color: var(--ink);
 }
 html input[type="text"], html input[type="password"], html input[type="number"], html input[type="email"],
@@ -299,8 +169,8 @@ html input:not([type]), html select, html textarea {
   min-height: 32px;
   margin: 2px 4px 2px 0;
   padding: 4px 9px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--engrave);
+  border-radius: var(--r-sm);
   background-color: var(--field);
   color: var(--ink);
 }
@@ -314,9 +184,9 @@ html input[type="button"], html input[type="submit"], html button {
   min-height: 32px;
   margin: 2px 4px 2px 0;
   padding: 5px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border: 1px solid var(--engrave);
+  border-radius: var(--r-sm);
+  background: var(--panel);
   color: var(--ink);
   font-weight: 600;
   cursor: pointer;
@@ -367,26 +237,26 @@ html .nice-select {
   min-height: 32px;
   height: auto;
   line-height: 30px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--engrave);
+  border-radius: var(--r-sm);
   background: var(--field);
   color: var(--ink);
-  font: .9rem/30px var(--sans);
+  font: .9rem/30px var(--font);
 }
 html .nice-select.small { height: 32px !important; min-height: 32px !important; line-height: 30px !important; }
 html .nice-select:after { border-color: var(--muted); }
 html .nice-select-dropdown, html .nice-select .list {
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--panel);
+  border: 1px solid var(--engrave);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
 }
 html .nice-select .option { color: var(--ink); }
-html .nice-select .option:hover, html .nice-select .option.focus, html .nice-select .option.selected.focus { background: var(--surface-2); }
+html .nice-select .option:hover, html .nice-select .option.focus, html .nice-select .option.selected.focus { background: var(--panel-2); }
 html .nice-select .nice-select-search {
   background: var(--field);
   color: var(--ink);
-  border: 1px solid var(--line);
+  border: 1px solid var(--engrave);
 }
 
 /* Logs (live log, update, upgrade output). */
@@ -395,9 +265,9 @@ html #tail, html pre {
   max-width: 100%;
   overflow: auto;
   padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--surface-2) !important;
+  border: 1px solid var(--engrave);
+  border-radius: var(--r);
+  background: var(--panel-2) !important;
   color: var(--ink) !important;
   font: .8rem/1.5 var(--mono) !important;
   text-align: left;
@@ -410,11 +280,11 @@ html iframe { width: 100%; border: 0; display: block; }
 html .footer {
   margin: 24px 0 0;
   padding: 16px 0 32px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--engrave);
   border-radius: 0;
   background: transparent;
   color: var(--muted);
-  font: .78rem/1.6 var(--sans);
+  font: .78rem/1.6 var(--font);
   text-align: left;
   clear: both;
 }
@@ -422,7 +292,7 @@ html .footer a, html .footer a:link, html .footer a:visited { color: var(--link)
 
 /* ---------- Wi-Fi panel (wifi.php, shown in an iframe on Configuration) ---------- */
 
-html body.ps-wifi, html body:has(> .infobox) { background: var(--surface); margin: 0; padding: 10px 12px; }
+html body.ps-wifi, html body:has(> .infobox) { background: var(--panel); margin: 0; padding: 10px 12px; }
 html .infobox {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -438,16 +308,16 @@ html .infoheader {
   border: 0;
   color: var(--ink);
   text-align: left;
-  font: 650 .95rem/1.3 var(--sans);
+  font: 650 .95rem/1.3 var(--font);
 }
 html .intinfo, html .wifiinfo, html .network {
   float: none;
   width: auto;
   margin: 0;
   padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
+  border: 1px solid var(--engrave);
+  border-radius: var(--r-sm);
+  background: var(--panel-2);
   color: var(--ink);
   font: .8rem/1.6 var(--mono);
   text-align: left;
@@ -457,7 +327,7 @@ html .intheader {
   padding: 0;
   background: transparent;
   color: var(--muted);
-  font: 600 .78rem/1.3 var(--sans);
+  font: 600 .78rem/1.3 var(--font);
   text-align: left;
 }
 html .intinfo br + br + .intheader { margin-top: 0; }
@@ -466,7 +336,7 @@ html .intfooter {
   padding: 0;
   background: transparent;
   color: var(--muted);
-  font: .75rem var(--sans);
+  font: .75rem var(--font);
   text-align: left;
 }
 html .tail { display: none; }
@@ -478,12 +348,6 @@ html .red { color: var(--fault); }
 /* ---------- Narrow screens ---------- */
 
 @media (max-width: 829px) {
-  html .container { padding: 0 16px; }
-  html .header { grid-template-columns: minmax(0, 1fr); }
-  html .header > h1 { padding-right: 44px; font-size: 1.3rem; }
-  html .header > p:first-of-type, html .header > nav > p:first-of-type { grid-column: 1; grid-row: auto; justify-content: flex-start; max-width: none; padding-right: 0 !important; margin-left: -10px; }
-  html .header > p:nth-of-type(n+2) { margin-left: 0; }
-  html .ps-theme { top: 20px; }
   html .nav { float: none; width: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
   html .content { margin: 0; }
   /* Wide settings tables scroll sideways instead of overflowing the page. */
@@ -513,7 +377,7 @@ html input[style*="background"] { color: #10210f !important; }
     align-items: center;
     gap: 6px 10px;
     padding: 10px 12px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--engrave);
   }
   html .contentwide form table tr:last-child { border-bottom: 0; }
   html .contentwide form table tr:has(> th) { display: none; }
@@ -554,9 +418,9 @@ html .ps-applybar {
   gap: 12px;
   margin: 20px 0 0;
   padding: 10px 12px 10px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--engrave);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
   backdrop-filter: blur(6px);
   box-shadow: 0 6px 24px rgba(0, 0, 0, .28);
 }
@@ -572,7 +436,7 @@ html .ps-applybar .ps-applybar-btn {
 
 /* ---------- Admin: the /live/ layout mounted inside the stock page ---------- */
 
-html .ps-embed .layout { max-width: none; padding: 0 0 8px; }
+html .ps-embed .layout { max-width: none; padding: 20px 0 8px; }
 html .ps-embed table.act {
   border: 0;
   border-radius: 0;
@@ -580,19 +444,20 @@ html .ps-embed table.act {
   overflow: visible;
 }
 html .ps-embed .act th { background: transparent; }
-html .ps-embed .panel h2, html .ps-embed .card h2 { margin: 0; font-size: 1rem; }
-html .ps-embed .card h2 { margin-bottom: 10px; }
-html .ps-embed .readout { font-family: var(--mono); }
+/* Stock h2 / ul / li rules must not reach the live panels and status cards. */
+html .ps-embed .panel h2 { margin: 0; padding: 0; font-size: 1.02rem; }
+html .ps-embed .card h2 { margin: 0 -16px 12px; padding: 11px 16px 9px; font-size: 1.02rem; text-align: left; }
+html .ps-embed .lamps { margin: 0; padding: 0; }
+html .ps-embed .lamps li { float: none; margin: 0; padding: 0; }
 /* Admin tools keep their stock markup; give each one breathing room. */
 html .ps-tools { display: grid; gap: 16px; padding-bottom: 14px; }
-html .ps-tools > b, html .ps-tools > div > b { display: block; margin: 0 0 8px; font: 650 1rem/1.3 var(--sans); }
+html .ps-tools > b, html .ps-tools > div > b { display: block; margin: 0 0 8px; font: 650 1rem/1.3 var(--font); }
 html .ps-tools br { display: none; }
 html body.ps-admin-live .container { max-width: 1280px; }
 
 /* Stock link colours/weights must not leak into the live layout. */
 html .ps-embed .call a:link, html .ps-embed .call a:visited { color: var(--ink); font-weight: inherit; }
 html .ps-embed .call a:hover { color: var(--link); }
-html .ps-embed .ro-callsign a:link, html .ps-embed .ro-callsign a:visited { color: inherit; font-weight: inherit; }
 html .ps-embed .aprs:link, html .ps-embed .aprs:visited { color: var(--muted); }
 
 /* ---------- Static Apply buttons (replaced by the sticky bar) ---------- */
@@ -611,9 +476,9 @@ html button.ps-action {
   min-height: 0;
   margin: 0;
   padding: 16px !important;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--surface-2);
+  border: 1px solid var(--engrave);
+  border-radius: var(--r);
+  background: var(--panel-2);
   color: var(--ink);
   text-align: left;
   font-weight: 400;
@@ -650,11 +515,11 @@ html input[type="file"] { display: block; margin: 0 0 12px; color: var(--muted);
 html input[type="file"]::file-selector-button {
   margin-right: 10px;
   padding: 6px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border: 1px solid var(--engrave);
+  border-radius: var(--r-sm);
+  background: var(--panel);
   color: var(--ink);
-  font: 600 .85rem var(--sans);
+  font: 600 .85rem var(--font);
   cursor: pointer;
 }
 @media (max-width: 640px) {
@@ -703,7 +568,7 @@ html img[src$="20green.png"], html img[src$="20red.png"] {
 }
 html img[src$="20green.png"] { background: var(--on); box-shadow: 0 0 0 3px color-mix(in srgb, var(--on) 22%, transparent); }
 html img[src$="20red.png"] { background: var(--fault); box-shadow: 0 0 0 3px color-mix(in srgb, var(--fault) 22%, transparent); }
-html .ps-embed .activity-scroll .act thead th { background: var(--surface); }
+html .ps-embed .activity-scroll .act thead th { background: var(--panel); }
 
 /* Admin control page: stock link colours must not leak into the control tiles. */
 html .ps-embed a.control:link, html .ps-embed a.control:visited { color: var(--ink); }
@@ -717,3 +582,8 @@ html th a.tooltip, html th a.tooltip:hover { cursor: default; text-decoration: n
 /* Help popups near the bottom of the window open upwards (skin.js sets the class). */
 html a.tooltip2.ps-tip-up:hover span, html a.tooltip.ps-tip-up:hover span { top: auto; bottom: 22px; }
 html a.tooltip2:hover span, html a.tooltip:hover span { z-index: 60; }
+
+/* Phones: the sticky Apply bar sits above the bottom tab bar (shell.css). */
+@media (max-width: 640px) {
+  html .ps-applybar { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 10px); }
+}

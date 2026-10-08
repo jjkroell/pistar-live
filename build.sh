@@ -7,7 +7,7 @@ stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 mkdir -p "$stage/live" "$stage/skin" "$stage/nginx" dist
 
-cp index.php data.php sys.php cfg.php cfg.inc.php compat.inc.php app.css app.js "$stage/live/"
+cp index.php data.php sys.php cfg.php cfg.inc.php compat.inc.php shell.css shell.js app.css app.js saira.woff2 saira-OFL.txt "$stage/live/"
 cp skin/skin.css skin/skin.js "$stage/skin/"
 cp live-landing.conf "$stage/nginx/"
 # Cache-bust the injected skin and the admin-embedded app with the release version.

@@ -4,21 +4,21 @@
 
   // Settings come from the page (#cfg) or, when another page mounts the
   // layout (the restyled /admin/), from window.PISTAR_LIVE.cfg.
+  // The header, LCD readout and the data.php poll belong to the shell
+  // (shell.js); this file subscribes to it.
   var embed = window.PISTAR_LIVE || {};
   var cfgEl = document.getElementById('cfg');
   var cfg = embed.cfg || JSON.parse(cfgEl.textContent);
-  var POLL_MS = 1500;          // stock lh.php / localtx.php cadence
+  var shell = window.PistarShell;
+  var U = shell.util;
+  var esc = U.esc, utc = U.utc, now = U.now, ago = U.ago, liveText = U.liveText,
+    modeLabel = U.modeLabel, targetLabel = U.targetLabel, callHtml = U.callHtml;
   var CCS_MS = 15000;          // stock css_connections.php cadence
   var PAGES_MS = 5000;         // stock pages.php cadence
   var LIST_LEN = 20;           // stock lists show the last 20 calls
   var HISTORY_MS = 6000;       // full 100-call gateway history: refresh at most this often,
                                // plus straight away whenever a call starts or ends
   var VOICE_MODES = /^(D-Star|DMR.*|YSF|P25|NXDN|M17)$/;   // localtx.php filter
-
-  var idLookup = 'https://database.radioid.net/database/view?id=';
-  var callLookup = cfg.lookup === 'QRZ'
-    ? 'https://www.qrz.com/db/'
-    : 'https://database.radioid.net/database/view?callsign=';
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -46,18 +46,6 @@
     ['/admin/power.php', 'power', 'Power', 'Reboot or shut down the hotspot.']
   ];
 
-  function readoutHtml() {
-    return '<section class="readout" id="readout" data-state="idle" aria-live="polite" aria-label="Radio status">' +
-      '<div class="ro-state"><span class="lamp-big" aria-hidden="true"></span><span id="roState">Connecting</span></div>' +
-      '<div class="ro-call"><span class="ro-label" id="roLabel">&nbsp;</span><span class="ro-callsign" id="roCall">&nbsp;</span></div>' +
-      '<dl class="ro-fields">' +
-        '<div><dt>Target</dt><dd id="roTarget">&nbsp;</dd></div>' +
-        '<div><dt>Mode</dt><dd id="roMode">&nbsp;</dd></div>' +
-        '<div><dt>Source</dt><dd id="roSrc">&nbsp;</dd></div>' +
-        '<div><dt id="roTimeLabel">Duration</dt><dd id="roTime">&nbsp;</dd></div>' +
-      '</dl>' +
-    '</section>';
-  }
   function optionalPanels() {
     return (cfg.dstarNet ? '<section class="panel" aria-label="D-Star CCS connections"><div id="ccs" class="frag"></div></section>' : '') +
       (cfg.pocsag ? '<section class="panel" aria-labelledby="pgTitle"><div class="panel-head"><h2 id="pgTitle">POCSAG pages</h2></div><div id="pages" class="frag"></div></section>' : '');
@@ -65,12 +53,10 @@
 
   function buildLayout(root) {
     var tz = esc(cfg.tzAbbr || '');
-    var stale = '<div class="stale" id="stale" hidden>Can\'t reach the hotspot. Retrying every few seconds.</div>';
     if (ADMIN) {
-      root.innerHTML = stale +
+      root.innerHTML =
         '<main class="layout">' +
         '<div class="primary">' +
-          readoutHtml() +
           '<section class="panel sys-panel" id="system" aria-labelledby="sysTitle" hidden>' +
             '<div class="panel-head"><h2 id="sysTitle">System</h2></div>' +
             '<div class="sys-grid"><dl class="kv" id="sysList"></dl><div id="sysServices"></div></div>' +
@@ -99,10 +85,9 @@
         '</main>';
       return;
     }
-    root.innerHTML = stale +
+    root.innerHTML =
       '<main class="layout">' +
       '<div class="primary">' +
-        readoutHtml() +
         '<div id="liveSlot" class="contents"></div>' +
         '<section class="panel" aria-labelledby="gwTitle"><div class="panel-head"><h2 id="gwTitle">Gateway activity</h2>' +
           '<span class="panel-note">Last 100 calls' + (tz ? ', times in ' + tz : '') + '</span></div><div id="gateway" class="activity activity-scroll" tabindex="0" aria-label="Gateway activity, scrollable"></div></section>' +
@@ -117,41 +102,26 @@
       '</main>';
   }
   buildLayout($('liveRoot'));
-  var skewMs = 0;              // server clock minus browser clock
   var lastData = null;
   var history = null;          // last 100 calls as events (data.php?history=1)
   var historyAt = 0;
   var historySig = '';         // newest call when the history was fetched
-  var failures = 0;
+  var PHONE = window.matchMedia('(max-width: 640px)');
+  var PHONE_LEN = 25;
+  var showAll = false;
+
+  $('gateway').addEventListener('click', function (e) {
+    if (!e.target.closest('[data-show-all]')) return;
+    showAll = true;
+    render();
+  });
+  if (PHONE.addEventListener) PHONE.addEventListener('change', function () { render(); });
 
   /* ---------- Helpers ---------- */
-
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
-  function utc(s) { return new Date(s.replace(' ', 'T') + 'Z'); }
-  function now() { return new Date(Date.now() + skewMs); }
 
   var fmtTime = new Intl.DateTimeFormat(undefined, { timeZone: cfg.tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
   var fmtDay = new Intl.DateTimeFormat(undefined, { timeZone: cfg.tz, month: 'short', day: 'numeric' });
   function dayKey(d) { return fmtDay.format(d); }
-
-  function ago(d) {
-    var s = Math.max(0, Math.round((now() - d) / 1000));
-    if (s < 60) return s + 's ago';
-    var m = Math.floor(s / 60);
-    if (m < 60) return m + ' min ago';
-    var h = Math.floor(m / 60);
-    if (h < 24) return h + ' h ' + (m % 60) + ' min ago';
-    return Math.floor(h / 24) + ' d ago';
-  }
-  function liveSecs(r) { return Math.max(0, Math.round((now() - utc(r.time)) / 1000)); }
-  function liveText(r) { var s = liveSecs(r); return s < 999 ? s + 's' : '999s+'; }
-
-  function modeLabel(m) { return m.replace('Slot ', 'TS'); }
-  function targetLabel(t) { return t.replace(/ /g, ' ').trim(); }
 
   // Same thresholds as lh.php / localtx.php.
   function berClass(v) {
@@ -169,66 +139,7 @@
     return 'q-bad';
   }
 
-  var PIN = '<svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
-
-  // Callsign link rules ported from lh.php.
-  function callHtml(r, withAprs) {
-    var c = r.call;
-    if (/^\d+$/.test(c)) {
-      return +c > 9999
-        ? '<a href="' + idLookup + encodeURIComponent(c) + '" target="_blank" rel="noopener">' + esc(c) + '</a>'
-        : esc(c);
-    }
-    if (!/[A-Za-z].*[0-9]|[0-9].*[A-Za-z]/.test(c)) return esc(c);
-    var base = c.indexOf('-') > 0 ? c.slice(0, c.indexOf('-')) : c;
-    var html = '<a href="' + callLookup + encodeURIComponent(base) + '" target="_blank" rel="noopener" title="Look up ' + esc(base) + '">' + esc(base) + '</a>';
-    if (r.suffix) html += '/' + esc(r.suffix);
-    if (withAprs) {
-      html += '<a class="aprs" href="https://aprs.fi/#!call=' + encodeURIComponent(base) + '*" target="_blank" rel="noopener" aria-label="Find ' + esc(base) + ' on aprs.fi" title="Find on aprs.fi">' + PIN + '</a>';
-    }
-    return html;
-  }
-
-  /* ---------- Repeater info (stock HTML -> structure) ---------- */
-
-  // Stock cells carry state as an inline background colour.
-  function cellState(el) {
-    var bg = (el.getAttribute('style') || '').toLowerCase().match(/background:\s*(#[0-9a-f]{3,6})/);
-    if (!bg) return '';
-    var c = bg[1];
-    if (c === '#0b0' || c === '#1d1' || c === '#4aa361') return 'on';
-    if (c === '#606060') return 'off';
-    if (c === '#b00' || c === '#f33') return 'fault';
-    if (c === '#ffffff' || c === '#fff') return '';
-    return 'mode';          // "Listening <mode>" tints
-  }
-
-  function parseRepeaterInfo(html) {
-    var doc = new DOMParser().parseFromString(html, 'text/html');
-    return Array.prototype.map.call(doc.querySelectorAll('table'), function (table) {
-      var sec = { title: '', items: [] };
-      Array.prototype.forEach.call(table.rows, function (tr) {
-        var cells = tr.cells;
-        var txt = function (c) { return c.textContent.replace(/ /g, ' ').trim(); };
-        if (cells.length === 1) {
-          var c = cells[0];
-          if (c.tagName === 'TH') {
-            if (!sec.title) sec.title = txt(c);
-            else sec.items.push({ type: 'sub', text: txt(c) });
-          } else {
-            sec.items.push({ type: 'value', text: txt(c), state: cellState(c) });
-          }
-        } else if (cells.length === 2 && cells[0].tagName === 'TH') {
-          sec.items.push({ type: 'kv', key: txt(cells[0]), text: txt(cells[1]), state: cellState(cells[1]) });
-        } else {
-          Array.prototype.forEach.call(cells, function (c) {
-            sec.items.push({ type: 'lamp', text: txt(c), state: cellState(c) });
-          });
-        }
-      });
-      return sec;
-    });
-  }
+  /* ---------- Status cards (stock repeater info) ---------- */
 
   var STATE_TIP = { fault: 'Enabled, but its service is not running' };
 
@@ -259,50 +170,6 @@
       out += '</section>';
     });
     $('status').innerHTML = out.replace(/<dl class="kv"><\/dl>/g, '');
-  }
-
-  /* ---------- Readout ---------- */
-
-  function findKv(sections, key) {
-    for (var s = 0; s < sections.length; s++) {
-      for (var i = 0; i < sections[s].items.length; i++) {
-        var it = sections[s].items[i];
-        if (it.type === 'kv' && it.key === key) return it;
-      }
-    }
-    return null;
-  }
-
-  function renderReadout(sections, rows) {
-    var trx = findKv(sections, 'Trx');
-    var trxText = trx ? trx.text : '';
-    var state = 'idle';
-    if (/^TX/i.test(trxText)) state = 'tx';
-    else if (/^RX/i.test(trxText)) state = 'rx';
-    else if (/^OFFLINE/i.test(trxText)) state = 'offline';
-    $('readout').dataset.state = state;
-    $('roState').textContent = trxText || 'Unknown';
-
-
-    var r = rows[0];
-    if (!r) {
-      $('roLabel').textContent = 'Nothing heard yet today';
-      $('roCall').innerHTML = '&nbsp;';
-      ['roTarget', 'roMode', 'roSrc', 'roTime'].forEach(function (id) { $(id).textContent = '-'; });
-      return;
-    }
-    $('roLabel').textContent = r.live ? (r.src === 'RF' ? 'Receiving' : 'Transmitting from network') : 'Last heard';
-    $('roCall').innerHTML = callHtml(r, false);
-    $('roTarget').textContent = targetLabel(r.target) || '-';
-    $('roMode').textContent = modeLabel(r.mode);
-    $('roSrc').textContent = r.src || '-';
-    if (r.live) {
-      $('roTimeLabel').textContent = 'On air';
-      $('roTime').textContent = liveText(r);
-    } else {
-      $('roTimeLabel').textContent = r.dur && !isNaN(parseFloat(r.dur)) ? 'Duration' : 'Heard';
-      $('roTime').textContent = r.dur && !isNaN(parseFloat(r.dur)) ? r.dur + 's, ' + ago(utc(r.time)) : ago(utc(r.time));
-    }
   }
 
   /* ---------- Activity lists ---------- */
@@ -361,13 +228,16 @@
 
   function render() {
     if (!lastData) return;
-    var sections = parseRepeaterInfo(lastData.repeaterInfo || '');
+    var sections = U.parseRepeaterInfo(lastData.repeaterInfo || '');
     var rows = lastData.lastHeard || [];
-    renderReadout(sections, rows);
     renderStatus(sections);
     var gw = $('gateway');
     var keep = gw.scrollTop;          // re-rendering must not jump the list back to the top
-    renderList(gw, ADMIN ? rows.slice(0, ADMIN_RECENT) : (history || rows.slice(0, LIST_LEN)), false);
+    var calls = ADMIN ? rows.slice(0, ADMIN_RECENT) : (history || rows.slice(0, LIST_LEN));
+    // Phones show the list in the page (no inner scroll box): newest few, then "Show all".
+    var cut = !ADMIN && !showAll && PHONE.matches && calls.length > PHONE_LEN;
+    renderList(gw, cut ? calls.slice(0, PHONE_LEN) : calls, false);
+    if (cut) gw.insertAdjacentHTML('beforeend', '<button type="button" class="show-all" data-show-all>Show all ' + calls.length + ' calls</button>');
     gw.scrollTop = keep;
     if ($('localrf')) renderList($('localrf'), rows.filter(function (r) { return r.src === 'RF' && VOICE_MODES.test(r.mode); }).slice(0, LIST_LEN), true);
   }
@@ -388,32 +258,15 @@
       (lastData && callSig(lastData.lastHeard) !== historySig);
   }
 
-  function poll() {
-    if (document.hidden) return;          // no point making the Pi parse logs for a background tab
-    fetch('/live/data.php' + (wantHistory() ? '?history=1' : ''), { cache: 'no-store' })
-      .then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); })
-      .then(function (data) {
-        skewMs = utc(data.now) - Date.now();
-        lastData = data;
-        if (data.history) {
-          history = data.history;
-          historyAt = Date.now();
-          historySig = callSig(data.lastHeard);
-        }
-        failures = 0;
-        $('stale').hidden = true;
-        render();
-      })
-      .catch(function () {
-        failures++;
-        if (failures >= 2) $('stale').hidden = false;
-      })
-      .then(function () { schedule(failures ? POLL_MS * 2 : POLL_MS); });
-  }
-  var timer = null;
-  function schedule(ms) { clearTimeout(timer); timer = setTimeout(poll, ms); }
-
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) schedule(0); });
+  shell.subscribe(function (data) {
+    lastData = data;
+    if (data.history) {
+      history = data.history;
+      historyAt = Date.now();
+      historySig = callSig(data.lastHeard);
+    }
+    render();
+  }, { fast: true, wantHistory: wantHistory });
 
   function fragment(id, url, every) {
     var el = $(id);
@@ -511,16 +364,6 @@
 
   document.dispatchEvent(new CustomEvent('pistar-live:mounted', { detail: { slot: $('liveSlot') } }));
 
-  poll();
   if (cfg.dstarNet) fragment('ccs', '/dstarrepeater/css_connections.php', CCS_MS);
   if (cfg.pocsag) fragment('pages', '/mmdvmhost/pages.php', PAGES_MS);
-
-  /* ---------- Theme toggle ---------- */
-
-  if ($('themeToggle')) $('themeToggle').addEventListener('click', function () {
-    var root = document.documentElement;
-    var dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-    root.dataset.theme = dark ? 'light' : 'dark';
-    try { localStorage.setItem('live-theme', root.dataset.theme); } catch (e) {}
-  });
 })();

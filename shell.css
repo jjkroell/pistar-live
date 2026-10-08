@@ -1,0 +1,543 @@
+/*
+ * Pi-Star Live: the shared "rig faceplate" shell, loaded on every page
+ * (/live/ links it; nginx injects it into the stock pages).
+ *
+ * Holds the design tokens both stylesheets use (app.css for /live/,
+ * skin.css for the stock pages), the bundled Saira font, and the common
+ * header: callsign plate, LCD readout, nav keys and the page title row.
+ *
+ * The look is a radio front panel: anodized graphite (or a silver panel in
+ * the light theme), silkscreen-style condensed labels, and one dark LCD
+ * whose backlight follows the radio: ice blue idle, green RX, red TX.
+ */
+
+@font-face {
+  font-family: "Saira";
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 50% 125%;
+  font-display: swap;
+  src: url("/live/saira.woff2") format("woff2");
+}
+
+:root {
+  /* Silver panel (light). */
+  --chassis: #cfd2ce;
+  --panel: #e9ebe7;
+  --panel-2: #dfe2dd;
+  --field: #f6f7f4;
+  --engrave: #b3b8b2;
+  --engrave-hi: rgba(255, 255, 255, .7);
+  --ink: #1a1c1e;
+  --muted: #565b59;
+  --link: #1d4f7a;
+  --on: #16803d;
+  --off: #a9afaa;
+  --fault: #c0352a;
+  --warn: #9a5c00;
+  --accent: #2a78bf;
+  --accent-ink: #ffffff;
+  --shadow: 0 1px 0 var(--engrave-hi) inset, 0 1px 2px rgba(0, 0, 0, .12);
+
+  /* The LCD keeps its own dark glass in both themes. */
+  --lcd-glass: #0e1620;
+  --lcd-ink: #9fd4ff;
+  --lcd-dim: rgba(159, 212, 255, .55);
+  --lcd-glow: rgba(159, 212, 255, .17);
+
+  --font: "Saira", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  --narrow: 87.5%;      /* headings, keys */
+  --condensed: 75%;     /* LCD */
+  --r: 6px;
+  --r-sm: 4px;
+  --page-w: 1280px;
+  --gutter: 20px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chassis: #16181b;
+    --panel: #212428;
+    --panel-2: #292d32;
+    --field: #191b1e;
+    --engrave: #363b41;
+    --engrave-hi: rgba(255, 255, 255, .05);
+    --ink: #ebe8e2;
+    --muted: #9d9a93;
+    --link: #9fc4ea;
+    --on: #5df08a;
+    --off: #4a5056;
+    --fault: #ff5a4a;
+    --warn: #f0a531;
+    --accent: #8fcaff;
+    --accent-ink: #06192b;
+    --shadow: 0 1px 0 var(--engrave-hi) inset, 0 1px 3px rgba(0, 0, 0, .4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --chassis: #16181b;
+  --panel: #212428;
+  --panel-2: #292d32;
+  --field: #191b1e;
+  --engrave: #363b41;
+  --engrave-hi: rgba(255, 255, 255, .05);
+  --ink: #ebe8e2;
+  --muted: #9d9a93;
+  --link: #9fc4ea;
+  --on: #5df08a;
+  --off: #4a5056;
+  --fault: #ff5a4a;
+  --warn: #f0a531;
+  --accent: #8fcaff;
+  --accent-ink: #06192b;
+  --shadow: 0 1px 0 var(--engrave-hi) inset, 0 1px 3px rgba(0, 0, 0, .4);
+  color-scheme: dark;
+}
+
+/* ---------- Faceplate ---------- */
+
+.fp {
+  position: relative;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--panel) 92%, #fff), var(--panel) 40%);
+  border-bottom: 1px solid var(--engrave);
+  box-shadow: 0 1px 0 var(--engrave-hi) inset, 0 2px 10px rgba(0, 0, 0, .18);
+  color: var(--ink);
+  font: 15px/1.45 var(--font);
+}
+.fp *, .pg-head * { box-sizing: border-box; }
+.fp-inner {
+  max-width: var(--page-w);
+  margin: 0 auto;
+  padding: 16px var(--gutter) 0;
+}
+.fp-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px 24px;
+}
+
+/* Callsign plate. */
+html .fp .fp-plate {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--ink) !important;
+  text-decoration: none !important;
+}
+.fp-call {
+  font-size: 1.85rem;
+  font-weight: 700;
+  font-stretch: var(--narrow);
+  letter-spacing: .04em;
+  line-height: 1;
+}
+.fp-sub {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: .78rem;
+  white-space: nowrap;
+}
+
+/* Theme button: a small round control knob. */
+html .fp .fp-knob {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--engrave);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, var(--panel), var(--panel-2) 70%);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  cursor: pointer;
+}
+html .fp .fp-knob:hover { border-color: var(--muted); }
+html .fp .fp-knob svg { width: 16px; height: 16px; fill: currentColor; }
+
+/* Nav keys, each with a small indicator lamp that lights on the current page. */
+.fp-keys {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  flex-wrap: wrap;
+  margin: 12px 0 0 -12px;
+}
+html .fp .fp-key, html .fp .fp-more > summary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px 11px;
+  border: 0;
+  background: none;
+  color: var(--muted) !important;
+  font: 600 .8rem/1 var(--font);
+  font-stretch: var(--narrow);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  white-space: nowrap;
+  cursor: pointer;
+  list-style: none;
+}
+html .fp .fp-more > summary::-webkit-details-marker { display: none; }
+html .fp .fp-key::before, html .fp .fp-more > summary::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--off);
+}
+html .fp .fp-key:hover, html .fp .fp-more > summary:hover { color: var(--ink) !important; }
+html .fp .fp-key[aria-current="page"], html .fp .fp-more.is-current > summary { color: var(--ink) !important; }
+html .fp .fp-key[aria-current="page"]::before, html .fp .fp-more.is-current > summary::before {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent), 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+html .fp .fp-key:focus-visible, html .fp .fp-more > summary:focus-visible, html .fp .fp-knob:focus-visible, html .fp .fp-menu a:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: -2px;
+  border-radius: var(--r-sm);
+}
+html .fp .fp-more > summary svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 2.5; }
+.fp-more { position: static; }
+.fp-menu {
+  position: absolute;
+  z-index: 100;
+  min-width: 220px;
+  margin-top: -4px;
+  padding: 6px;
+  border: 1px solid var(--engrave);
+  border-radius: var(--r);
+  background: var(--panel);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .3);
+}
+html .fp .fp-menu a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  color: var(--ink) !important;
+  font: 500 .92rem/1.2 var(--font);
+  text-decoration: none !important;
+}
+html .fp .fp-menu a:hover { background: var(--panel-2); }
+html .fp .fp-menu a[aria-current="page"] { background: var(--panel-2); box-shadow: inset 2px 0 0 var(--accent); }
+.fp-menu hr { margin: 6px 4px; border: 0; border-top: 1px solid var(--engrave); }
+
+/* ---------- LCD readout ---------- */
+
+.lcd {
+  display: flex;
+  align-items: center;
+  gap: 6px 26px;
+  min-width: 0;
+  min-height: 62px;
+  padding: 9px 18px;
+  border: 1px solid rgba(0, 0, 0, .55);
+  border-radius: var(--r);
+  background:
+    radial-gradient(80% 170% at 18% 0%, var(--lcd-glow), transparent 65%),
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, .018) 0 1px, transparent 1px 3px),
+    var(--lcd-glass);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, .6), 0 1px 0 var(--engrave-hi);
+  color: var(--lcd-ink);
+  font-family: var(--font);
+  font-stretch: var(--condensed);
+  font-variant-numeric: tabular-nums;
+  transition: background-color .25s, color .25s;
+}
+.lcd[data-state="rx"] {
+  --lcd-glass: #0e1c13;
+  --lcd-ink: #7dffa8;
+  --lcd-dim: rgba(125, 255, 168, .55);
+  --lcd-glow: rgba(125, 255, 168, .17);
+}
+.lcd[data-state="tx"] {
+  --lcd-glass: #220f0c;
+  --lcd-ink: #ff8c7d;
+  --lcd-dim: rgba(255, 140, 125, .6);
+  --lcd-glow: rgba(255, 110, 95, .2);
+}
+.lcd[data-state="offline"] {
+  --lcd-glass: #18191b;
+  --lcd-ink: #9aa1a6;
+  --lcd-dim: rgba(154, 161, 166, .6);
+  --lcd-glow: transparent;
+}
+html .fp .lcd a { color: inherit !important; font-weight: inherit !important; text-decoration: none !important; }
+html .fp .lcd a:hover { text-decoration: underline !important; text-decoration-thickness: 2px !important; }
+
+.ro-state {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 128px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.lamp-big {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--lcd-ink);
+  box-shadow: 0 0 8px var(--lcd-ink);
+}
+.lcd[data-state="rx"] .lamp-big, .lcd[data-state="tx"] .lamp-big { animation: lcd-pulse 1s ease-in-out infinite; }
+.lcd[data-state="offline"] .lamp-big { box-shadow: none; }
+@keyframes lcd-pulse { 50% { opacity: .35; } }
+
+.ro-call { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+.ro-label, .ro-fields dt { color: var(--lcd-dim); font-size: .74rem; letter-spacing: .04em; }
+.ro-callsign {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: .05em;
+  text-shadow: 0 0 14px var(--lcd-glow);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ro-fields {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 2px 22px;
+  margin: 0;
+}
+.ro-fields div { min-width: 0; }
+.ro-fields dd {
+  margin: 1px 0 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+
+/* ---------- Page title row (stock pages) ---------- */
+
+.pg-head {
+  max-width: var(--page-w);
+  margin: 0 auto;
+  padding: 22px var(--gutter) 4px;
+  color: var(--ink);
+  font: 15px/1.45 var(--font);
+}
+html .pg-head .pg-title {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  text-shadow: none;
+  letter-spacing: 0;
+  font-size: 1.55rem;
+  font-weight: 650;
+  font-stretch: var(--narrow);
+  line-height: 1.2;
+}
+.pg-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  font-size: 0;           /* hides the stock " | " separators */
+}
+.pg-tabs > p { display: contents; }
+.pg-tabs br { display: none; }
+html .pg-head .pg-tabs b {
+  display: block;
+  flex-basis: 100%;
+  margin: 8px 0 2px;
+  padding: 0;
+  text-align: left;
+  color: var(--muted);
+  font: 600 .8rem/1.3 var(--font);
+}
+.pg-tabs b:first-child { margin-top: 0; }
+html .pg-head .pg-tabs a, html .pg-head .pg-tabs a:link, html .pg-head .pg-tabs a:visited {
+  padding: 5px 11px;
+  border: 1px solid var(--engrave);
+  border-radius: var(--r-sm);
+  background: var(--panel);
+  color: var(--ink) !important;
+  font: 500 .86rem/1.3 var(--font);
+  text-decoration: none;
+}
+html .pg-head .pg-tabs a:hover { border-color: var(--muted); }
+html .pg-head .pg-tabs a[aria-current="page"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+  font-weight: 650;
+}
+html .pg-head .pg-tabs a[href^="javascript:factoryReset"] { color: var(--fault) !important; }
+
+.shell-stale {
+  max-width: var(--page-w);
+  margin: 14px auto 0;
+  padding: 0 var(--gutter);
+  font: 600 .9rem/1.4 var(--font);
+}
+.shell-stale > span {
+  display: block;
+  padding: 10px 14px;
+  border-radius: var(--r);
+  background: var(--fault);
+  color: #fff;
+}
+
+/* ---------- Narrow screens ---------- */
+
+@media (max-width: 860px) {
+  .fp-top { grid-template-columns: minmax(0, 1fr) auto; }
+  .lcd { grid-column: 1 / -1; grid-row: 2; }
+}
+/* ---------- Phones ----------
+   The callsign row scrolls away; the LCD stays pinned at the top as a
+   compact three-line display, and the nav keys become a bottom tab bar. */
+
+.tabbar { display: none; }
+
+@media (max-width: 640px) {
+  :root { --gutter: 16px; --tabbar-h: 60px; }
+
+  .fp {
+    position: sticky;
+    top: -60px;                 /* = padding-top + plate row + gap: only the LCD sticks */
+    z-index: 60;
+  }
+  .fp-inner { padding: 10px var(--gutter) 10px; }
+  .fp-top { row-gap: 10px; }
+  html .fp .fp-plate { height: 40px; justify-content: center; }
+  .fp-call { font-size: 1.4rem; }
+  .fp-sub { margin-top: 3px; font-size: .72rem; }
+  html .fp .fp-knob { width: 34px; height: 34px; }
+  .fp-keys { display: none; }
+
+  /* Compact LCD:  ● LISTENING        DMR TS1   Net
+                   K0DEMO                  TG 3100
+                   Last heard   2.6s, 4 min ago  */
+  .lcd {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: baseline;
+    gap: 1px 12px;
+    min-height: 0;
+    padding: 8px 12px 7px;
+  }
+  .ro-call, .ro-fields, .ro-fields div { display: contents; }
+  .ro-fields dt {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .ro-state { grid-area: 1 / 1; min-width: 0; font-size: .82rem; }
+  .lamp-big { width: 8px; height: 8px; }
+  #roMode { grid-area: 1 / 2; }
+  #roSrc { grid-area: 1 / 3; }
+  .ro-callsign { grid-area: 2 / 1; font-size: 1.45rem; }
+  #roTarget { grid-area: 2 / 2 / 2 / 4; justify-self: end; font-size: 1.1rem; }
+  .ro-label { grid-area: 3 / 1; font-size: .72rem; }
+  #roTime { grid-area: 3 / 2 / 3 / 4; justify-self: end; color: var(--lcd-dim); font-size: .78rem; font-weight: 500; }
+  .ro-fields dd { margin: 0; font-size: .82rem; }
+
+  html .pg-head .pg-title { font-size: 1.3rem; }
+  .pg-head { padding-top: 16px; }
+
+  /* Bottom tab bar. */
+  html.has-shell body { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
+  .tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 70;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+    padding: 0 4px env(safe-area-inset-bottom);
+    border-top: 1px solid var(--engrave);
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--panel) 94%, #fff), var(--panel));
+    box-shadow: 0 1px 0 var(--engrave-hi) inset, 0 -4px 16px rgba(0, 0, 0, .2);
+    font: 15px/1.2 var(--font);
+  }
+  html .tabbar .tab {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    margin: 0;
+    padding: 6px 2px 4px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--muted) !important;
+    font: 600 .68rem/1 var(--font);
+    font-stretch: var(--narrow);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    text-decoration: none !important;
+    min-height: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  #tabMore svg { fill: currentColor; stroke: none; }
+  html .tabbar .tab[aria-current="page"], html .tabbar .tab.is-current, html .tabbar .tab[aria-expanded="true"] { color: var(--ink) !important; }
+  /* The current tab's indicator lamp. */
+  .tab[aria-current="page"]::before, .tab.is-current::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    left: calc(50% + 13px);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .tab:focus-visible { outline: 2px solid var(--link); outline-offset: -4px; border-radius: var(--r-sm); }
+
+  .tab-sheet {
+    position: absolute;
+    right: 8px;
+    bottom: calc(100% + 8px);
+    min-width: 230px;
+    padding: 6px;
+    border: 1px solid var(--engrave);
+    border-radius: var(--r);
+    background: var(--panel);
+    box-shadow: 0 -6px 28px rgba(0, 0, 0, .35);
+  }
+  html .tab-sheet a {
+    display: block;
+    padding: 12px 12px;
+    border-radius: var(--r-sm);
+    color: var(--ink) !important;
+    font: 500 .98rem/1.2 var(--font);
+    text-decoration: none !important;
+  }
+  html .tab-sheet a:active { background: var(--panel-2); }
+  html .tab-sheet a[aria-current="page"] { background: var(--panel-2); box-shadow: inset 3px 0 0 var(--accent); }
+  html .tab-sheet a[href="/index.php"] { margin-top: 6px; border-top: 1px solid var(--engrave); border-radius: 0 0 var(--r-sm) var(--r-sm); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lcd { transition: none; }
+  .lamp-big { animation: none !important; }
+}

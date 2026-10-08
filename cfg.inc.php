@@ -49,6 +49,8 @@ $cfg = array(
 );
 $cfg['pistarVersion'] = $pistarVersion;
 $cfg['dashVersion'] = $version;
+// false in DStarRepeater mode: no /live/ dashboard or LCD feed there.
+$cfg['mmdvm'] = file_exists('/etc/dstar-radio.mmdvmhost');
 $cfg['hostname'] = trim((string)@file_get_contents('/etc/hostname'));
 $cfg['bannerH1'] = $bannerH1;
 $cfg['bannerExt'] = $bannerExt;
