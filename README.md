@@ -4,6 +4,9 @@ A modern dashboard for [Pi-Star](https://www.pistar.uk/) digital voice hotspots,
 Pi-Star's own Admin, Configuration and Expert pages, styled after a radio's front panel. It installs on top of a stock Pi-Star with one
 script, edits none of Pi-Star's files, and removes cleanly.
 
+Running [WPSD](https://w0chp.radio/wpsd/) instead of Pi-Star? Use
+[wpsd-live](https://github.com/jjkroell/wpsd-live), the WPSD edition of this dashboard.
+
 ![The live dashboard in dark mode, receiving a call](docs/screenshots/dashboard-dark.png)
 
 <sub>Screenshots use made-up callsigns and settings.</sub>
